@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>NetManager - Gestão Mensal</title>
+
+  <!-- Configurações PWA e Mobile -->
+  <meta name="theme-color" content="#0f172a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="NetManager">
+
+  <!-- Manifest PWA Embutido via Data URI -->
+  <link rel="manifest" href='data:application/manifest+json;utf-8,{"name":"NetManager","short_name":"NetManager","start_url":".","display":"standalone","background_color":"%23020617","theme_color":"%230f172a","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/93/93158.png","sizes":"512x512","type":"image/png"}]}'>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              500: '#10b981',
+              600: '#059669',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    input, select, button {
+      -webkit-tap-highlight-color: transparent;
+    }
+    .touch-target {
+      min-height: 48px;
+    }
+  </style>
+</head>
+
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased pb-24 selection:bg-emerald-500 selection:text-white">
+
+  <!-- Cabeçalho Fixo -->
+  <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3">
+    <div class="max-w-md mx-auto flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <div class="p-2 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
+          <i data-lucide="wifi" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight leading-none text-white">NetManager</h1>
+          <span id="currentCycleLabel" class="text-xs text-emerald-400 font-medium">Ciclo Atual</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <!-- Botão de Instalar App -->
+        <button id="btnInstallApp" class="hidden touch-target bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-2.5 rounded-xl flex items-center gap-1 border border-slate-700 text-xs active:scale-95 transition-all">
+          <i data-lucide="download" class="w-4 h-4 text-emerald-400"></i>
+          <span>App</span>
+        </button>
+
+        <button onclick="openModal()" class="touch-target bg-emerald-500 hover:bg-emerald-600 active:scale-95 transition-all text-slate-950 font-bold px-3.5 rounded-xl flex items-center gap-1.5 shadow-lg shadow-emerald-500/20 text-sm">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          <span>Novo</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Container Principal -->
+  <main class="max-w-md mx-auto px-4 pt-4 space-y-4">
+
+    <!-- Painel de Ações do Ciclo Mensal -->
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-3 flex items-center justify-between gap-2">
+      <div>
+        <span class="text-xs text-slate-400 block">Competência de Cobrança:</span>
+        <strong id="activeMonthDisplay" class="text-sm font-bold text-white uppercase">Mês Atual</strong>
+      </div>
+      <button onclick="resetMonthlyCycle()" class="touch-target px-3 bg-slate-800 hover:bg-slate-700 active:scale-95 border border-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all" title="Reinicia o status dos clientes para o novo mês">
+        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-emerald-400"></i>
+        <span>Virar Mês</span>
+      </button>
+    </section>
+
+    <!-- Painel de Contadores -->
+    <section class="grid grid-cols-3 gap-2.5">
+      <div class="bg-slate-900 border border-slate-800/80 rounded-2xl p-3 text-center">
+        <span class="text-[11px] font-medium uppercase tracking-wider text-slate-400 block mb-0.5">Total</span>
+        <span id="counterTotal" class="text-2xl font-black text-white">0</span>
+      </div>
+      <div class="bg-slate-900 border border-emerald-500/20 rounded-2xl p-3 text-center bg-emerald-950/10">
+        <span class="text-[11px] font-medium uppercase tracking-wider text-emerald-400 block mb-0.5">Pagos</span>
+        <span id="counterPaid" class="text-2xl font-black text-emerald-400">0</span>
+      </div>
+      <div class="bg-slate-900 border border-rose-500/20 rounded-2xl p-3 text-center bg-rose-950/10">
+        <span class="text-[11px] font-medium uppercase tracking-wider text-rose-400 block mb-0.5">Pendentes</span>
+        <span id="counterPending" class="text-2xl font-black text-rose-400">0</span>
+      </div>
+    </section>
+
+    <!-- Busca -->
+    <div class="relative">
+      <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+        <i data-lucide="search" class="w-5 h-5"></i>
+      </div>
+      <input 
+        type="text" 
+        id="searchInput" 
+        placeholder="Buscar cliente por nome..." 
+        oninput="renderClients()"
+        class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-11 pr-4 touch-target text-slate-100 placeholder-slate-500 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all"
+      >
+    </div>
+
+    <!-- Filtros -->
+    <section class="bg-slate-900 p-1 rounded-xl flex gap-1 border border-slate-800">
+      <button onclick="setFilter('all')" id="filterAll" class="flex-1 touch-target text-xs font-semibold rounded-lg transition-all py-2 text-slate-400 bg-transparent">
+        Todos
+      </button>
+      <button onclick="setFilter('pending')" id="filterPending" class="flex-1 touch-target text-xs font-semibold rounded-lg transition-all py-2 text-slate-400 bg-transparent">
+        Pendentes
+      </button>
+      <button onclick="setFilter('paid')" id="filterPaid" class="flex-1 touch-target text-xs font-semibold rounded-lg transition-all py-2 text-slate-400 bg-transparent">
+        Pagos
+      </button>
+    </section>
+
+    <!-- Lista de Cards -->
+    <section id="clientsList" class="space-y-3 pt-1"></section>
+
+    <!-- Estado Vazio -->
+    <div id="emptyState" class="hidden text-center py-12 px-4 space-y-3">
+      <div class="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center mx-auto text-slate-600 border border-slate-800">
+        <i data-lucide="users" class="w-8 h-8"></i>
+      </div>
+      <p class="text-slate-400 font-medium text-sm">Nenhum cliente cadastrado.</p>
+    </div>
+
+  </main>
+
+  <!-- Modal de Cadastro -->
+  <div id="clientModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-6 max-h-[92vh] overflow-y-auto space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-200">
+      
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+          <i data-lucide="user-plus" class="w-5 h-5 text-emerald-400"></i>
+          Adicionar Cliente
+        </h2>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white p-2 rounded-lg bg-slate-800/50">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="clientForm" onsubmit="saveClient(event)" class="space-y-3.5">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Nome do Cliente *</label>
+          <input type="text" id="clientName" required placeholder="Ex: João da Silva" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-base">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Plano *</label>
+            <select id="clientPlan" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 focus:outline-none focus:border-emerald-500 text-base">
+              <option value="10 Mega">10 Mega</option>
+              <option value="20 Mega">20 Mega</option>
+              <option value="30 Mega">30 Mega</option>
+              <option value="40 Mega">40 Mega</option>
+              <option value="50 Mega" selected>50 Mega</option>
+              <option value="60 Mega">60 Mega</option>
+              <option value="70 Mega">70 Mega</option>
+              <option value="80 Mega">80 Mega</option>
+              <option value="90 Mega">90 Mega</option>
+              <option value="100 Mega">100 Mega</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Valor (R$) *</label>
+            <input type="number" id="clientPrice" step="0.01" min="0" required placeholder="89.90" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-base">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Dia Vencimento *</label>
+            <input type="number" id="clientDueDay" min="1" max="31" required placeholder="Ex: 10" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-base">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Status Inicial *</label>
+            <select id="clientStatus" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 focus:outline-none focus:border-emerald-500 text-base">
+              <option value="pending">Pendente</option>
+              <option value="paid">Pago</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">WhatsApp (com DDD)</label>
+          <input type="tel" id="clientPhone" placeholder="Ex: 11987654321" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-base">
+        </div>
+
+        <div class="pt-3">
+          <button type="submit" class="w-full touch-target bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] transition-all text-slate-950 font-bold rounded-xl text-base flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
+            <i data-lucide="check" class="w-5 h-5"></i>
+            Cadastrar Cliente
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <script>
+    // Gerenciamento de Dados e Ciclo Mensal
+    const STORAGE_KEY = 'netmanager_clients_db';
+    let currentFilter = 'all';
+
+    function getCurrentCycleKey() {
+      const now = new Date();
+      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    function getCurrentCycleName() {
+      return new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    }
+
+    function getStoredClients() {
+      const data = localStorage.getItem(STORAGE_KEY);
+      return data ? JSON.parse(data) : [];
+    }
+
+    function saveStoredClients(clients) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
+    }
+
+    // Virada de Mês manual / Novo Ciclo
+    function resetMonthlyCycle() {
+      const cycleName = getCurrentCycleName();
+      if (confirm(`Deseja iniciar as cobranças do ciclo de ${cycleName}? Isso marcará todos os clientes como pendentes para este mês.`)) {
+        const currentCycle = getCurrentCycleKey();
+        const clients = getStoredClients().map(c => {
+          // Se o pagamento for de um ciclo anterior, reseta para pendente
+          return {
+            ...c,
+            status: 'pending'
+          };
+        });
+        saveStoredClients(clients);
+        renderClients();
+      }
+    }
+
+    function openModal() {
+      document.getElementById('clientForm').reset();
+      document.getElementById('clientModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('clientModal').classList.add('hidden');
+    }
+
+    function saveClient(e) {
+      e.preventDefault();
+      const newClient = {
+        id: 'client_' + Date.now(),
+        name: document.getElementById('clientName').value.trim(),
+        plan: document.getElementById('clientPlan').value,
+        price: parseFloat(document.getElementById('clientPrice').value),
+        dueDay: parseInt(document.getElementById('clientDueDay').value, 10),
+        phone: document.getElementById('clientPhone').value.replace(/\D/g, ''),
+        status: document.getElementById('clientStatus').value,
+        lastPaidMonth: document.getElementById('clientStatus').value === 'paid' ? getCurrentCycleKey() : null
+      };
+
+      const clients = getStoredClients();
+      clients.unshift(newClient);
+      saveStoredClients(clients);
+
+      closeModal();
+      renderClients();
+    }
+
+    function toggleStatus(id) {
+      const clients = getStoredClients();
+      const client = clients.find(c => c.id === id);
+      if (client) {
+        const isNowPaid = client.status !== 'paid';
+        client.status = isNowPaid ? 'paid' : 'pending';
+        client.lastPaidMonth = isNowPaid ? getCurrentCycleKey() : null;
+        saveStoredClients(clients);
+        renderClients();
+      }
+    }
+
+    function deleteClient(id) {
+      if (confirm("Deseja realmente remover este cliente?")) {
+        let clients = getStoredClients();
+        clients = clients.filter(c => c.id !== id);
+        saveStoredClients(clients);
+        renderClients();
+      }
+    }
+
+    function openWhatsApp(name, plan, price, dueDay, phone) {
+      if (!phone) {
+        alert("Nenhum WhatsApp cadastrado.");
+        return;
+      }
+      const formattedPrice = price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const currentMonth = new Date().toLocaleDateString('pt-BR', { month: 'long' });
+      
+      const message = `Olá ${name}, segue o lembrete da mensalidade da sua internet de ${plan} referente ao mês de ${currentMonth}. Valor: R$ ${formattedPrice}, com vencimento no dia ${dueDay}.`;
+      window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(message)}`, '_blank');
+    }
+
+    function setFilter(filter) {
+      currentFilter = filter;
+      const buttons = {
+        all: document.getElementById('filterAll'),
+        pending: document.getElementById('filterPending'),
+        paid: document.getElementById('filterPaid')
+      };
+
+      Object.keys(buttons).forEach(key => {
+        if (key === filter) {
+          buttons[key].className = 'flex-1 touch-target text-xs font-bold rounded-lg transition-all py-2 text-white bg-slate-800 shadow-sm';
+        } else {
+          buttons[key].className = 'flex-1 touch-target text-xs font-semibold rounded-lg transition-all py-2 text-slate-400 hover:text-slate-200 bg-transparent';
+        }
+      });
+
+      renderClients();
+    }
+
+    function renderClients() {
+      const clients = getStoredClients();
+      const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
+      const todayDay = new Date().getDate();
+
+      document.getElementById('counterTotal').textContent = clients.length;
+      document.getElementById('counterPaid').textContent = clients.filter(c => c.status === 'paid').length;
+      document.getElementById('counterPending').textContent = clients.filter(c => c.status === 'pending').length;
+
+      const filtered = clients.filter(c => {
+        const matchesName = c.name.toLowerCase().includes(searchQuery);
+        if (!matchesName) return false;
+        if (currentFilter === 'paid') return c.status === 'paid';
+        if (currentFilter === 'pending') return c.status === 'pending';
+        return true;
+      });
+
+      const container = document.getElementById('clientsList');
+      const emptyState = document.getElementById('emptyState');
+      container.innerHTML = '';
+
+      if (filtered.length === 0) {
+        emptyState.classList.remove('hidden');
+      } else {
+        emptyState.classList.add('hidden');
+      }
+
+      filtered.forEach(client => {
+        const isPaid = client.status === 'paid';
+        const isLate = !isPaid && todayDay > client.dueDay;
+        const formattedPrice = client.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        
+        const card = document.createElement('div');
+        card.className = `bg-slate-900 border ${isPaid ? 'border-slate-800/80' : isLate ? 'border-rose-500/60' : 'border-amber-500/40'} rounded-2xl p-4 transition-all shadow-md space-y-3 relative overflow-hidden`;
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-2">
+            <div class="space-y-1 pr-2">
+              <div class="flex items-center gap-2">
+                <h3 class="font-bold text-base text-white tracking-tight leading-snug line-clamp-1">${client.name}</h3>
+                ${isLate ? '<span class="px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider bg-rose-500/20 text-rose-400 rounded-md border border-rose-500/30">Atrasado</span>' : ''}
+              </div>
+              <p class="text-xs text-slate-400 font-medium">
+                ${client.plan} • <span class="text-slate-200 font-semibold">R$ ${formattedPrice}</span>
+              </p>
+            </div>
+            <button onclick="deleteClient('${client.id}')" class="text-slate-500 hover:text-rose-400 p-2 -mr-1.5 -mt-1 rounded-lg active:scale-95 transition-all">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <div class="flex items-center justify-between border-t border-slate-800/60 pt-2.5 text-xs">
+            <div class="flex items-center gap-1.5 ${isLate ? 'text-rose-400 font-semibold' : 'text-slate-300'}">
+              <i data-lucide="calendar" class="w-4 h-4 ${isLate ? 'text-rose-400' : 'text-slate-500'}"></i>
+              <span>Vence todo: <strong class="text-white font-bold">Dia ${client.dueDay}</strong></span>
+            </div>
+
+            ${client.phone ? `
+              <button onclick="openWhatsApp('${client.name}', '${client.plan}', ${client.price}, ${client.dueDay}, '${client.phone}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 active:scale-95 transition-all font-semibold">
+                <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+                Cobrar
+              </button>
+            ` : '<span class="text-[11px] text-slate-600">Sem telefone</span>'}
+          </div>
+
+          <div>
+            <button onclick="toggleStatus('${client.id}')" class="w-full touch-target rounded-xl font-black text-sm tracking-wider uppercase flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${
+                isPaid 
+                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950/40' 
+                  : isLate
+                    ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-950/40 animate-pulse'
+                    : 'bg-amber-600 hover:bg-amber-500 text-white shadow-lg shadow-amber-950/40'
+              }">
+              <i data-lucide="${isPaid ? 'check-circle-2' : 'alert-circle'}" class="w-5 h-5"></i>
+              ${isPaid ? 'PAGO' : isLate ? 'VENCIDO' : 'A VENCER'}
+            </button>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+
+      lucide.createIcons();
+    }
+
+    // Inicialização da interface e rótulos
+    document.addEventListener('DOMContentLoaded', () => {
+      const monthName = getCurrentCycleName();
+      document.getElementById('activeMonthDisplay').textContent = monthName;
+      document.getElementById('currentCycleLabel').textContent = `Ciclo: ${monthName}`;
+      setFilter('all');
+    });
+
+    // Gerenciador PWA
+    let deferredPrompt;
+    const installBtn = document.getElementById('btnInstallApp');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.classList.remove('hidden');
+    });
+
+    installBtn.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          installBtn.classList.add('hidden');
+        }
+        deferredPrompt = null;
+      }
+    });
+
+    if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
+      const workerCode = `
+        self.addEventListener('install', e => self.skipWaiting());
+        self.addEventListener('activate', e => clients.claim());
+        self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
+      `;
+      const blob = new Blob([workerCode], { type: 'text/javascript' });
+      navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+    }
+  </script>
+</body>
+</html>
