@@ -173,16 +173,9 @@
           <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Plano *</label>
             <select id="clientPlan" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 focus:outline-none focus:border-emerald-500 text-base">
-              <option value="10 Mega">10 Mega</option>
-              <option value="20 Mega">20 Mega</option>
-              <option value="30 Mega">30 Mega</option>
-              <option value="40 Mega">40 Mega</option>
-              <option value="50 Mega" selected>50 Mega</option>
-              <option value="60 Mega">60 Mega</option>
-              <option value="70 Mega">70 Mega</option>
-              <option value="80 Mega">80 Mega</option>
               <option value="90 Mega">90 Mega</option>
-              <option value="100 Mega">100 Mega</option>
+              <option value="150 Mega" selected>150 Mega</option>
+              <option value="200 Mega">200 Mega</option>
             </select>
           </div>
 
@@ -250,14 +243,10 @@
     function resetMonthlyCycle() {
       const cycleName = getCurrentCycleName();
       if (confirm(`Deseja iniciar as cobranças do ciclo de ${cycleName}? Isso marcará todos os clientes como pendentes para este mês.`)) {
-        const currentCycle = getCurrentCycleKey();
-        const clients = getStoredClients().map(c => {
-          // Se o pagamento for de um ciclo anterior, reseta para pendente
-          return {
-            ...c,
-            status: 'pending'
-          };
-        });
+        const clients = getStoredClients().map(c => ({
+          ...c,
+          status: 'pending'
+        }));
         saveStoredClients(clients);
         renderClients();
       }
