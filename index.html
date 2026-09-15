@@ -266,18 +266,21 @@
         >
       </div>
 
-      <!-- Filtros -->
-      <section class="bg-slate-900 p-1 rounded-xl grid grid-cols-4 gap-1 border border-slate-800 text-center">
-        <button onclick="setFilter('all')" id="filterAll" class="touch-target text-xs font-semibold rounded-lg py-2 transition-all text-slate-400 bg-transparent">
+      <!-- Filtros com 'Em 2 Dias' e 'Hoje' -->
+      <section class="bg-slate-900 p-1 rounded-xl grid grid-cols-5 gap-1 border border-slate-800 text-center">
+        <button onclick="setFilter('all')" id="filterAll" class="touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-slate-400 bg-transparent">
           Todos
         </button>
-        <button onclick="setFilter('today')" id="filterToday" class="touch-target text-xs font-semibold rounded-lg py-2 transition-all text-amber-400 bg-transparent">
+        <button onclick="setFilter('in2days')" id="filterIn2Days" class="touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-cyan-400 bg-transparent">
+          Em 2 Dias
+        </button>
+        <button onclick="setFilter('today')" id="filterToday" class="touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-amber-400 bg-transparent">
           Hoje
         </button>
-        <button onclick="setFilter('pending')" id="filterPending" class="touch-target text-xs font-semibold rounded-lg py-2 transition-all text-slate-400 bg-transparent">
+        <button onclick="setFilter('pending')" id="filterPending" class="touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-slate-400 bg-transparent">
           Atrasados
         </button>
-        <button onclick="setFilter('paid')" id="filterPaid" class="touch-target text-xs font-semibold rounded-lg py-2 transition-all text-slate-400 bg-transparent">
+        <button onclick="setFilter('paid')" id="filterPaid" class="touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-slate-400 bg-transparent">
           Pagos
         </button>
       </section>
@@ -294,7 +297,7 @@
     </main>
   </div>
 
-  <!-- MODAL DE CONFIGURAÇÃO DE PIX DO MASTER -->
+  <!-- MODAL DE CONFIGURAÇÃO DE PIX DO MASTER (SEU PIX) -->
   <div id="masterPixModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -938,7 +941,7 @@
         pass: document.getElementById('provPass').value.trim(),
         fee: parseFloat(document.getElementById('provFee').value),
         dueDay: parseInt(document.getElementById('provDueDay').value, 10),
-        phone: document.getElementById('provPhone').value.replace(/\D/g, ''),
+        phone: document.getElementById('provPhone').value.replace(/\\D/g, ''),
         status: 'active',
         paidStatus: 'pending'
       };
@@ -977,8 +980,8 @@
       let message = `Olá ${name}, segue o lembrete da mensalidade do seu sistema LinkPay Pro referente ao mês de ${currentMonth}. Valor da licença: R$ ${formattedFee}, com vencimento no dia ${dueDay}.`;
 
       if (masterPix.key) {
-        message += `\n\n📌 Pagamento via PIX:\nChave: ${masterPix.key}`;
-        if (masterPix.holder) message += `\nTitular: ${masterPix.holder}`;
+        message += `\\n\\n📌 Pagamento via PIX:\\nChave: ${masterPix.key}`;
+        if (masterPix.holder) message += `\\nTitular: ${masterPix.holder}`;
       }
 
       window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(message)}`, '_blank');
@@ -1067,7 +1070,7 @@
       safeCreateIcons();
     }
 
-    // --- FUNÇÕES OPERACIONAIS DO PROVEDOR ---
+    // --- FUNÇÕES OPERACIONAIS PROVEDOR ---
     function getCurrentCycleKey() {
       const now = new Date();
       return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -1108,7 +1111,7 @@
         plan: document.getElementById('clientPlan').value,
         price: parseFloat(document.getElementById('clientPrice').value),
         dueDay: parseInt(document.getElementById('clientDueDay').value, 10),
-        phone: document.getElementById('clientPhone').value.replace(/\D/g, ''),
+        phone: document.getElementById('clientPhone').value.replace(/\\D/g, ''),
         status: document.getElementById('clientStatus').value
       };
 
@@ -1138,6 +1141,7 @@
       }
     }
 
+    // Lógica de Cobrança sem menção a planos/megas (apenas valor e vencimento)
     function openWhatsApp(name, plan, price, dueDay, phone) {
       if (!phone) {
         alert("Nenhum WhatsApp cadastrado.");
@@ -1145,13 +1149,27 @@
       }
       const formattedPrice = price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       const currentMonth = new Date().toLocaleDateString('pt-BR', { month: 'long' });
+      const todayDay = new Date().getDate();
       const cfgPix = JSON.parse(localStorage.getItem(getPixConfigKey()) || '{}');
 
-      let message = `Olá ${name}, segue o lembrete da mensalidade da sua internet de ${plan} referente ao mês de ${currentMonth}. Valor: R$ ${formattedPrice}, com vencimento no dia ${dueDay}.`;
+      let message = "";
+      if (dueDay === todayDay + 2) {
+        // Lembrete preventivo de 2 dias antes (sem megas)
+        message = `Olá ${name}! Passando para lembrar que sua mensalidade referente ao mês de ${currentMonth} vence em 2 dias (Dia ${dueDay}). Valor: R$ ${formattedPrice}.`;
+      } else if (dueDay === todayDay) {
+        // Lembrete do próprio dia (sem megas)
+        message = `Olá ${name}! Sua mensalidade vence hoje (Dia ${dueDay}). Valor: R$ ${formattedPrice}.`;
+      } else if (todayDay > dueDay) {
+        // Mensagem de atraso (sem megas)
+        message = `Olá ${name}, notamos que sua mensalidade referente a ${currentMonth} (vencimento dia ${dueDay}) ainda consta em aberto. Valor: R$ ${formattedPrice}.`;
+      } else {
+        // Mensagem padrão (sem megas)
+        message = `Olá ${name}, segue o lembrete da sua mensalidade referente ao mês de ${currentMonth}. Valor: R$ ${formattedPrice}, com vencimento no dia ${dueDay}.`;
+      }
       
       if (cfgPix.key) {
-        message += `\n\n📌 Pagamento via PIX:\nChave: ${cfgPix.key}`;
-        if (cfgPix.holder) message += `\nTitular: ${cfgPix.holder}`;
+        message += `\\n\\n📌 Pagamento via PIX:\\nChave: ${cfgPix.key}`;
+        if (cfgPix.holder) message += `\\nTitular: ${cfgPix.holder}`;
       }
 
       window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(message)}`, '_blank');
@@ -1164,7 +1182,7 @@
       }
       const formattedPrice = price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       const currentMonth = new Date().toLocaleDateString('pt-BR', { month: 'long' });
-      const message = `Olá ${name}! ✅ Confirmamos o recebimento da sua mensalidade de internet de ${plan} referente ao mês de ${currentMonth} (R$ ${formattedPrice}). Muito obrigado por sua parceria!`;
+      const message = `Olá ${name}! ✅ Confirmamos o recebimento da sua mensalidade referente ao mês de ${currentMonth} no valor de R$ ${formattedPrice}. Muito obrigado por sua parceria!`;
       window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(message)}`, '_blank');
     }
 
@@ -1172,6 +1190,7 @@
       currentFilter = filter;
       const buttons = { 
         all: document.getElementById('filterAll'), 
+        in2days: document.getElementById('filterIn2Days'),
         today: document.getElementById('filterToday'),
         pending: document.getElementById('filterPending'), 
         paid: document.getElementById('filterPaid') 
@@ -1179,9 +1198,9 @@
 
       Object.keys(buttons).forEach(key => {
         if (key === filter) {
-          buttons[key].className = 'touch-target text-xs font-bold rounded-lg py-2 transition-all text-white bg-slate-800 shadow-sm';
+          buttons[key].className = 'touch-target text-[11px] font-bold rounded-lg py-2 transition-all text-white bg-slate-800 shadow-sm';
         } else {
-          buttons[key].className = 'touch-target text-xs font-semibold rounded-lg py-2 transition-all text-slate-400 hover:text-slate-200 bg-transparent';
+          buttons[key].className = 'touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-slate-400 hover:text-slate-200 bg-transparent';
         }
       });
       renderClients();
@@ -1212,6 +1231,7 @@
         if (currentFilter === 'paid') return c.status === 'paid';
         if (currentFilter === 'pending') return c.status === 'pending' && todayDay > c.dueDay;
         if (currentFilter === 'today') return c.status !== 'paid' && c.dueDay === todayDay;
+        if (currentFilter === 'in2days') return c.status !== 'paid' && c.dueDay === (todayDay + 2);
         return true;
       });
 
@@ -1225,17 +1245,19 @@
       filtered.forEach(client => {
         const isPaid = client.status === 'paid';
         const isToday = !isPaid && client.dueDay === todayDay;
+        const isIn2Days = !isPaid && client.dueDay === (todayDay + 2);
         const isLate = !isPaid && todayDay > client.dueDay;
         const formattedPrice = client.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
         const card = document.createElement('div');
-        card.className = `bg-slate-900 border ${isPaid ? 'border-slate-800/80' : isToday ? 'border-amber-500/60' : isLate ? 'border-rose-500/60' : 'border-slate-800'} rounded-2xl p-4 transition-all shadow-md space-y-3`;
+        card.className = `bg-slate-900 border ${isPaid ? 'border-slate-800/80' : isToday ? 'border-amber-500/60' : isIn2Days ? 'border-cyan-500/60' : isLate ? 'border-rose-500/60' : 'border-slate-800'} rounded-2xl p-4 transition-all shadow-md space-y-3`;
 
         card.innerHTML = `
           <div class="flex items-start justify-between gap-2">
             <div class="space-y-1 pr-2">
               <div class="flex items-center gap-2">
                 <h3 class="font-bold text-base text-white line-clamp-1">${client.name}</h3>
+                ${isIn2Days ? '<span class="px-2 py-0.5 text-[10px] font-extrabold bg-cyan-500/20 text-cyan-400 rounded-md border border-cyan-500/30">Em 2 Dias</span>' : ''}
                 ${isToday ? '<span class="px-2 py-0.5 text-[10px] font-extrabold bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/30">Vence Hoje</span>' : ''}
                 ${isLate ? '<span class="px-2 py-0.5 text-[10px] font-extrabold bg-rose-500/20 text-rose-400 rounded-md border border-rose-500/30">Atrasado</span>' : ''}
               </div>
@@ -1245,7 +1267,7 @@
           </div>
 
           <div class="flex items-center justify-between border-t border-slate-800/60 pt-2.5 text-xs">
-            <span class="${isToday ? 'text-amber-400 font-bold' : isLate ? 'text-rose-400 font-semibold' : 'text-slate-300'}">
+            <span class="${isIn2Days ? 'text-cyan-400 font-bold' : isToday ? 'text-amber-400 font-bold' : isLate ? 'text-rose-400 font-semibold' : 'text-slate-300'}">
               Vence todo: <strong class="text-white font-bold">Dia ${client.dueDay}</strong>
             </span>
             
@@ -1257,16 +1279,16 @@
               ` : ''}
 
               ${!isPaid && client.phone ? `
-                <button onclick="openWhatsApp('${client.name}', '${client.plan}', ${client.price}, ${client.dueDay}, '${client.phone}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold text-[11px]">
-                  <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> Cobrar PIX
+                <button onclick="openWhatsApp('${client.name}', '${client.plan}', ${client.price}, ${client.dueDay}, '${client.phone}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg ${isIn2Days ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'} font-semibold text-[11px]">
+                  <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> ${isIn2Days ? 'Lembrar 2 Dias' : 'Cobrar PIX'}
                 </button>
               ` : ''}
             </div>
           </div>
 
-          <button onclick="toggleStatus('${client.id}')" class="w-full touch-target rounded-xl font-black text-sm tracking-wider uppercase flex items-center justify-center gap-2 ${isPaid ? 'bg-emerald-600 text-white' : isToday ? 'bg-amber-600 text-white' : isLate ? 'bg-rose-600 text-white animate-pulse' : 'bg-slate-800 text-slate-300 border border-slate-700'}">
-            <i data-lucide="${isPaid ? 'check-circle-2' : isToday ? 'clock' : isLate ? 'alert-circle' : 'calendar'}"></i>
-            ${isPaid ? 'PAGO' : isToday ? 'VENCE HOJE' : isLate ? 'VENCIDO' : 'A VENCER'}
+          <button onclick="toggleStatus('${client.id}')" class="w-full touch-target rounded-xl font-black text-sm tracking-wider uppercase flex items-center justify-center gap-2 ${isPaid ? 'bg-emerald-600 text-white' : isToday ? 'bg-amber-600 text-white' : isIn2Days ? 'bg-cyan-700 text-white' : isLate ? 'bg-rose-600 text-white animate-pulse' : 'bg-slate-800 text-slate-300 border border-slate-700'}">
+            <i data-lucide="${isPaid ? 'check-circle-2' : isToday ? 'clock' : isIn2Days ? 'bell' : isLate ? 'alert-circle' : 'calendar'}"></i>
+            ${isPaid ? 'PAGO' : isToday ? 'VENCE HOJE' : isIn2Days ? 'VENCE EM 2 DIAS' : isLate ? 'VENCIDO' : 'A VENCER'}
           </button>
         `;
         container.appendChild(card);
