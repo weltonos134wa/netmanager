@@ -8,13 +8,17 @@
   <meta http-equiv="Expires" content="0">
   <title>LinkPay Pro - Gestão & Cobrança</title>
 
+  <!-- Configurações Mobile -->
   <meta name="theme-color" content="#0f172a">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="LinkPay">
 
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <script>
@@ -23,7 +27,11 @@
       theme: {
         extend: {
           colors: {
-            brand: { 50: '#ecfdf5', 500: '#10b981', 600: '#059669' }
+            brand: {
+              50: '#ecfdf5',
+              500: '#10b981',
+              600: '#059669',
+            }
           }
         }
       }
@@ -31,8 +39,12 @@
   </script>
 
   <style>
-    input, select, button { -webkit-tap-highlight-color: transparent; }
-    .touch-target { min-height: 48px; }
+    input, select, button {
+      -webkit-tap-highlight-color: transparent;
+    }
+    .touch-target {
+      min-height: 48px;
+    }
   </style>
 </head>
 
@@ -56,7 +68,7 @@
             type="text" 
             id="loginUser" 
             required 
-            placeholder="admin, master ou seu usuário" 
+            placeholder="admin, fibra1, iptv1 ou master" 
             autocomplete="username"
             autocapitalize="none"
             class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-base"
@@ -163,7 +175,7 @@
     <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3">
       <div class="max-w-md mx-auto flex items-center justify-between gap-2">
         <div class="flex items-center gap-2">
-          <div class="p-2 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
+          <div id="userCategoryIcon" class="p-2 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
             <i data-lucide="wifi" class="w-6 h-6"></i>
           </div>
           <div>
@@ -250,7 +262,7 @@
           id="searchInput" 
           placeholder="Buscar cliente por nome..." 
           oninput="renderClients()"
-          class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-11 pr-4 touch-target text-slate-100 placeholder-slate-500 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all"
+          class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-11 pr-4 touch-target text-slate-100 placeholder-slate-500 text-base focus:outline-none focus:border-emerald-500 transition-all"
         >
       </div>
 
@@ -454,6 +466,20 @@
 
         <div class="grid grid-cols-2 gap-3">
           <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Tipo de Serviço *</label>
+            <select id="provType" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 focus:outline-none focus:border-amber-500 text-sm">
+              <option value="telecom">Internet / Telecom (Megas)</option>
+              <option value="iptv">IPTV / Streaming</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Mensalidade Software (R$) *</label>
+            <input type="number" id="provFee" step="0.01" required placeholder="49.90" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 text-base">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Usuário Login *</label>
             <input type="text" id="provUser" required placeholder="netfibra" autocapitalize="none" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 text-base">
           </div>
@@ -465,18 +491,13 @@
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Mensalidade (R$) *</label>
-            <input type="number" id="provFee" step="0.01" required placeholder="49.90" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 text-base">
-          </div>
-          <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Dia Vencimento *</label>
             <input type="number" id="provDueDay" min="1" max="31" required placeholder="10" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 text-base">
           </div>
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">WhatsApp do Dono *</label>
-          <input type="tel" id="provPhone" required placeholder="11999999999" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 text-base">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">WhatsApp do Dono *</label>
+            <input type="tel" id="provPhone" required placeholder="11999999999" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 text-base">
+          </div>
         </div>
 
         <div class="pt-2">
@@ -488,13 +509,13 @@
     </div>
   </div>
 
-  <!-- MODAL DO PROVEDOR: NOVO CLIENTE -->
+  <!-- MODAL DO PROVEDOR: CADASTRO DE CLIENTE (ADAPTÁVEL TELECOM / IPTV) -->
   <div id="clientModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-6 max-h-[92vh] overflow-y-auto space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
         <h2 class="text-lg font-bold text-white flex items-center gap-2">
           <i data-lucide="user-plus" class="w-5 h-5 text-emerald-400"></i>
-          Adicionar Cliente
+          Adicionar Assinante
         </h2>
         <button onclick="closeModal()" class="text-slate-400 hover:text-white p-2 rounded-lg bg-slate-800/50">
           <i data-lucide="x" class="w-5 h-5"></i>
@@ -509,16 +530,14 @@
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Plano *</label>
+            <label id="planSelectLabel" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Plano *</label>
             <select id="clientPlan" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 focus:outline-none focus:border-emerald-500 text-base">
-              <option value="90 Mega">90 Mega</option>
-              <option value="150 Mega" selected>150 Mega</option>
-              <option value="200 Mega">200 Mega</option>
+              <!-- Opções dinâmicas injetadas de acordo com o tipo de usuário -->
             </select>
           </div>
           <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Valor (R$) *</label>
-            <input type="number" id="clientPrice" step="0.01" min="0" required placeholder="89.90" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-base">
+            <input type="number" id="clientPrice" step="0.01" min="0" required placeholder="0.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-base">
           </div>
         </div>
 
@@ -543,7 +562,7 @@
 
         <div class="pt-3">
           <button type="submit" class="w-full touch-target bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] transition-all text-slate-950 font-bold rounded-xl text-base flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
-            <i data-lucide="check" class="w-5 h-5"></i> Cadastrar Cliente
+            <i data-lucide="check" class="w-5 h-5"></i> Cadastrar Assinante
           </button>
         </div>
       </form>
@@ -552,34 +571,92 @@
 
   <script>
     // =========================================================================
-    // ⭐️ LISTA GLOBAL DE PROVEDORES LIBERADOS (EDITAR AQUI AO VENDER NOVOS ACESSOS)
+    // ⭐️ LISTA GLOBAL DE CONTAS LIBERADAS (GARANTIDA EM QUALQUER CELULAR)
     // =========================================================================
     const GLOBAL_LICENSED_TENANTS = [
       {
         id: 'prov_demo',
-        name: 'Provedor Demonstração',
+        name: 'Provedor Demonstração (Telecom)',
         user: 'admin',
         pass: '123456',
+        type: 'telecom',
         fee: 59.90,
         dueDay: 10,
         phone: '11999999999',
         status: 'active',
         paidStatus: 'paid'
+      },
+      {
+        id: 'prov_fibra1',
+        name: 'Conecta Fibra Telecom',
+        user: 'fibra1',
+        pass: '123456',
+        type: 'telecom',
+        fee: 59.90,
+        dueDay: 10,
+        phone: '11999999999',
+        status: 'active',
+        paidStatus: 'paid'
+      },
+      {
+        id: 'prov_fibra2',
+        name: 'Veloz Net Telecom',
+        user: 'fibra2',
+        pass: '123456',
+        type: 'telecom',
+        fee: 59.90,
+        dueDay: 15,
+        phone: '11999999999',
+        status: 'active',
+        paidStatus: 'paid'
+      },
+      {
+        id: 'prov_fibra3',
+        name: 'Hyperlink Internet',
+        user: 'fibra3',
+        pass: '123456',
+        type: 'telecom',
+        fee: 59.90,
+        dueDay: 20,
+        phone: '11999999999',
+        status: 'active',
+        paidStatus: 'paid'
+      },
+      {
+        id: 'prov_fibra4',
+        name: 'MegaLink Provedor',
+        user: 'fibra4',
+        pass: '123456',
+        type: 'telecom',
+        fee: 59.90,
+        dueDay: 5,
+        phone: '11999999999',
+        status: 'active',
+        paidStatus: 'paid'
+      },
+      {
+        id: 'prov_iptv1',
+        name: 'CinePlay IPTV',
+        user: 'iptv1',
+        pass: '123456',
+        type: 'iptv',
+        fee: 49.90,
+        dueDay: 10,
+        phone: '11999999999',
+        status: 'active',
+        paidStatus: 'paid'
       }
-      // Para adicionar clientes, basta duplicar o bloco acima colocando vírgula!
     ];
 
-    // --- DESINSTALAÇÃO FORÇADA DE SERVICE WORKERS E CACHES ANTIGOS ---
+    // Limpeza de service workers antigos
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(registrations => {
-        for (let registration of registrations) {
-          registration.unregister();
-        }
+      navigator.serviceWorker.getRegistrations().then(regs => {
+        for (let r of regs) r.unregister();
       }).catch(() => {});
     }
     if ('caches' in window) {
       caches.keys().then(names => {
-        for (let name of names) caches.delete(name);
+        for (let n of names) caches.delete(n);
       }).catch(() => {});
     }
 
@@ -614,12 +691,13 @@
       if (confirm("Deseja limpar os dados de sessão e cache deste aparelho?")) {
         localStorage.removeItem('linkpay_logged_user');
         localStorage.removeItem('linkpay_logged_role');
+        localStorage.removeItem(MASTER_STORAGE_KEY);
         sessionStorage.clear();
         window.location.reload(true);
       }
     }
 
-    // Sincroniza os dados globais do código com o armazenamento local
+    // SINCRONIZAÇÃO FORÇADA: Sempre mescla as contas do código, nunca ignora novas contas!
     function getMasterTenants() {
       let localData = [];
       try {
@@ -627,14 +705,31 @@
         if (stored) localData = JSON.parse(stored);
       } catch (e) {}
 
-      // Mescla as contas do código com as cadastradas localmente
       const mergedMap = new Map();
-      GLOBAL_LICENSED_TENANTS.forEach(t => mergedMap.set(t.user.toLowerCase(), t));
-      localData.forEach(t => mergedMap.set(t.user.toLowerCase(), t));
+      GLOBAL_LICENSED_TENANTS.forEach(t => mergedMap.set(t.user.toLowerCase().trim(), t));
+
+      if (Array.isArray(localData)) {
+        localData.forEach(t => {
+          if (t && t.user) {
+            const key = t.user.toLowerCase().trim();
+            if (mergedMap.has(key)) {
+              mergedMap.set(key, { ...mergedMap.get(key), ...t });
+            } else {
+              mergedMap.set(key, t);
+            }
+          }
+        });
+      }
 
       const mergedList = Array.from(mergedMap.values());
       localStorage.setItem(MASTER_STORAGE_KEY, JSON.stringify(mergedList));
       return mergedList;
+    }
+
+    function getCurrentTenantConfig() {
+      if (currentRole !== 'tenant' || !currentUser) return null;
+      const tenants = getMasterTenants();
+      return tenants.find(t => t.user.toLowerCase() === currentUser.toLowerCase()) || { type: 'telecom' };
     }
 
     function saveMasterTenants(tenants) {
@@ -702,9 +797,21 @@
       } else if (currentRole === 'tenant' && currentUser) {
         appContainer.classList.remove('hidden');
         checkAutoMonthlyReset();
+        setupTenantInterface();
         renderClients();
       } else {
         loginScreen.classList.remove('hidden');
+      }
+      safeCreateIcons();
+    }
+
+    function setupTenantInterface() {
+      const tenant = getCurrentTenantConfig();
+      const iconEl = document.getElementById('userCategoryIcon');
+      if (tenant && tenant.type === 'iptv') {
+        if (iconEl) iconEl.innerHTML = '<i data-lucide="tv" class="w-6 h-6"></i>';
+      } else {
+        if (iconEl) iconEl.innerHTML = '<i data-lucide="wifi" class="w-6 h-6"></i>';
       }
       safeCreateIcons();
     }
@@ -728,7 +835,7 @@
 
       // 2. Verificação Provedor (Tenants)
       const tenants = getMasterTenants();
-      const tenant = tenants.find(t => t.user.toLowerCase() === user && t.pass === pass);
+      const tenant = tenants.find(t => t.user.toLowerCase().trim() === user && t.pass === pass);
 
       if (tenant) {
         if (tenant.status === 'blocked') {
@@ -928,6 +1035,7 @@
         name: document.getElementById('provCompany').value.trim(),
         user: user,
         pass: document.getElementById('provPass').value.trim(),
+        type: document.getElementById('provType').value,
         fee: parseFloat(document.getElementById('provFee').value),
         dueDay: parseInt(document.getElementById('provDueDay').value, 10),
         phone: document.getElementById('provPhone').value.replace(/\D/g, ''),
@@ -1013,6 +1121,7 @@
         const isPaid = t.paidStatus === 'paid';
         const isBlocked = t.status === 'blocked';
         const formattedFee = t.fee.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const typeBadge = t.type === 'iptv' ? '<span class="px-2 py-0.5 text-[10px] font-bold bg-purple-500/20 text-purple-400 rounded-md border border-purple-500/30">IPTV</span>' : '<span class="px-2 py-0.5 text-[10px] font-bold bg-blue-500/20 text-blue-400 rounded-md border border-blue-500/30">Telecom</span>';
 
         const card = document.createElement('div');
         card.className = `bg-slate-900 border ${isBlocked ? 'border-rose-900/50 opacity-60' : isPaid ? 'border-emerald-500/30' : 'border-slate-800'} rounded-2xl p-4 space-y-3`;
@@ -1022,6 +1131,7 @@
             <div>
               <div class="flex items-center gap-2">
                 <h3 class="font-bold text-base text-white">${t.name}</h3>
+                ${typeBadge}
                 ${isBlocked ? '<span class="px-2 py-0.5 text-[10px] font-bold bg-rose-500/20 text-rose-400 rounded-md">Bloqueado</span>' : '<span class="px-2 py-0.5 text-[10px] font-bold bg-emerald-500/20 text-emerald-400 rounded-md">Ativo</span>'}
               </div>
               <p class="text-xs text-slate-400 font-mono mt-0.5">Usuário: <strong class="text-slate-200">${t.user}</strong> • Senha: <span class="text-amber-400 font-semibold">${t.pass}</span></p>
@@ -1083,6 +1193,33 @@
 
     function openModal() {
       document.getElementById('clientForm').reset();
+      const tenant = getCurrentTenantConfig();
+      const planSelect = document.getElementById('clientPlan');
+      const planLabel = document.getElementById('planSelectLabel');
+
+      planSelect.innerHTML = '';
+
+      if (tenant && tenant.type === 'iptv') {
+        planLabel.textContent = "Plano IPTV *";
+        const iptvPlans = ["1 Tela (Mensal)", "2 Telas (Mensal)", "3 Telas (Mensal)", "Trimestral (1 Tela)", "Semestral", "Anual"];
+        iptvPlans.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p;
+          opt.textContent = p;
+          planSelect.appendChild(opt);
+        });
+      } else {
+        planLabel.textContent = "Velocidade Fibra *";
+        const telecomPlans = ["100 Mega", "200 Mega", "300 Mega", "400 Mega", "500 Mega", "600 Mega"];
+        telecomPlans.forEach((p, idx) => {
+          const opt = document.createElement('option');
+          opt.value = p;
+          opt.textContent = p;
+          if (idx === 2) opt.selected = true;
+          planSelect.appendChild(opt);
+        });
+      }
+
       document.getElementById('clientModal').classList.remove('hidden');
       safeCreateIcons();
     }
@@ -1129,7 +1266,6 @@
       }
     }
 
-    // Lógica de Cobrança sem menção a planos/megas (apenas valor e vencimento)
     function openWhatsApp(name, plan, price, dueDay, phone) {
       if (!phone) {
         alert("Nenhum WhatsApp cadastrado.");
