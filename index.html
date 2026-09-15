@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>LinkPay Pro - Gestão & Cobrança</title>
 
   <!-- Configurações PWA e Mobile -->
@@ -11,9 +14,6 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="LinkPay">
-
-  <!-- Manifest PWA Embutido via Data URI -->
-  <link rel="manifest" href='data:application/manifest+json;utf-8,{"name":"LinkPay","short_name":"LinkPay","start_url":".","display":"standalone","background_color":"%23020617","theme_color":"%230f172a","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/93/93158.png","sizes":"512x512","type":"image/png"}]}'>
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -70,6 +70,7 @@
             required 
             placeholder="admin ou master" 
             autocomplete="username"
+            autocapitalize="none"
             class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-base"
           >
         </div>
@@ -98,6 +99,12 @@
           Entrar no Sistema
         </button>
       </form>
+
+      <div class="pt-1 text-center">
+        <button type="button" onclick="forceCleanReset()" class="text-[11px] text-slate-500 hover:text-slate-300 underline">
+          Problemas ao entrar? Limpar cache do app
+        </button>
+      </div>
     </div>
   </div>
 
@@ -287,7 +294,7 @@
     </main>
   </div>
 
-  <!-- MODAL DE CONFIGURAÇÃO DE PIX DO MASTER (SEU PIX) -->
+  <!-- MODAL DE CONFIGURAÇÃO DE PIX DO MASTER -->
   <div id="masterPixModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -364,7 +371,7 @@
     </div>
   </div>
 
-  <!-- MODAL DE CONFIGURAÇÕES DO PROVEDOR (PIX + TROCAR SENHA + BACKUP) -->
+  <!-- MODAL DE CONFIGURAÇÕES DO PROVEDOR -->
   <div id="configModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-6 max-h-[92vh] overflow-y-auto space-y-5 shadow-2xl">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -403,7 +410,7 @@
         </button>
       </div>
 
-      <!-- Trocar a Própria Senha -->
+      <!-- Trocar Senha -->
       <div class="border-t border-slate-800 pt-4 space-y-3">
         <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Alterar Minha Senha de Acesso</h3>
         <div>
@@ -460,7 +467,7 @@
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Usuário Login *</label>
-            <input type="text" id="provUser" required placeholder="netfibra" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 text-base">
+            <input type="text" id="provUser" required placeholder="netfibra" autocapitalize="none" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 text-base">
           </div>
           <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Senha *</label>
@@ -556,7 +563,21 @@
   </div>
 
   <script>
-    // --- NÚMERO DO SEU SUPORTE MASTER (INSIRA SEU WHATSAPP REAL AQUI) ---
+    // --- DESINSTALAÇÃO FORÇADA DE SERVICE WORKERS E CACHES ANTIGOS DO CELULAR ---
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        for (let registration of registrations) {
+          registration.unregister();
+        }
+      }).catch(() => {});
+    }
+    if ('caches' in window) {
+      caches.keys().then(names => {
+        for (let name of names) caches.delete(name);
+      }).catch(() => {});
+    }
+
+    // --- NÚMERO DO SEU SUPORTE MASTER ---
     const MASTER_SUPPORT_PHONE = "5511999999999"; 
 
     // --- CREDENCIAIS MASTER (VOCÊ) ---
@@ -572,9 +593,36 @@
     let currentRole = localStorage.getItem('linkpay_logged_role') || null;
     let currentFilter = 'all';
 
+    // Recuperação de compatibilidade com versões anteriores
+    if (currentUser && !currentRole) {
+      currentRole = (currentUser.toLowerCase() === 'master') ? 'master' : 'tenant';
+      localStorage.setItem('linkpay_logged_role', currentRole);
+    }
+
+    function safeCreateIcons() {
+      try {
+        if (window.lucide && typeof lucide.createIcons === 'function') {
+          lucide.createIcons();
+        }
+      } catch (e) {
+        console.warn('Lucide icons error ignored:', e);
+      }
+    }
+
+    function forceCleanReset() {
+      if (confirm("Deseja limpar os dados de sessão e cache deste aparelho?")) {
+        localStorage.removeItem('linkpay_logged_user');
+        localStorage.removeItem('linkpay_logged_role');
+        sessionStorage.clear();
+        window.location.reload(true);
+      }
+    }
+
     function getMasterTenants() {
-      const data = localStorage.getItem(MASTER_STORAGE_KEY);
-      if (data) return JSON.parse(data);
+      try {
+        const data = localStorage.getItem(MASTER_STORAGE_KEY);
+        if (data) return JSON.parse(data);
+      } catch (e) {}
 
       const defaults = [
         {
@@ -605,9 +653,8 @@
       return `linkpay_pix_cfg_${currentUser || 'default'}`;
     }
 
-    // --- RECUPERAÇÃO DE SENHA VIA WHATSAPP COM O MASTER ---
     function recoverPasswordSupport() {
-      const userInput = document.getElementById('loginUser').value.trim();
+      const userInput = (document.getElementById('loginUser').value || '').trim();
       let msg = "Olá suporte do LinkPay Pro! Esqueci minha senha de acesso.";
       if (userInput) {
         msg += ` Meu usuário cadastrado é: *${userInput}*.`;
@@ -616,7 +663,6 @@
       window.open(`https://wa.me/${MASTER_SUPPORT_PHONE}?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
-    // --- AUTOMAÇÃO DE VIRADA MENSAL ---
     function checkAutoMonthlyReset() {
       if (!currentUser || currentRole !== 'tenant') return;
 
@@ -645,7 +691,7 @@
       }
     }
 
-    // --- AUTENTICAÇÃO ---
+    // --- AUTENTICAÇÃO COM TRATAMENTO MOBILE ---
     function checkAuth() {
       const loginScreen = document.getElementById('loginScreen');
       const masterContainer = document.getElementById('masterContainer');
@@ -665,17 +711,18 @@
       } else {
         loginScreen.classList.remove('hidden');
       }
-      lucide.createIcons();
+      safeCreateIcons();
     }
 
     function handleLogin(e) {
-      e.preventDefault();
-      const user = document.getElementById('loginUser').value.trim();
-      const pass = document.getElementById('loginPass').value.trim();
+      if (e) e.preventDefault();
+      const user = (document.getElementById('loginUser').value || '').trim().toLowerCase();
+      const pass = (document.getElementById('loginPass').value || '').trim();
       const errorEl = document.getElementById('loginError');
       errorEl.classList.add('hidden');
 
-      if (user === MASTER_CONFIG.username && pass === MASTER_CONFIG.password) {
+      // 1. Verificação Master
+      if (user === MASTER_CONFIG.username.toLowerCase() && pass === MASTER_CONFIG.password) {
         currentUser = "master";
         currentRole = "master";
         localStorage.setItem('linkpay_logged_user', "master");
@@ -684,8 +731,9 @@
         return;
       }
 
+      // 2. Verificação Provedor (Tenants)
       const tenants = getMasterTenants();
-      const tenant = tenants.find(t => t.user === user && t.pass === pass);
+      const tenant = tenants.find(t => t.user.toLowerCase() === user && t.pass === pass);
 
       if (tenant) {
         if (tenant.status === 'blocked') {
@@ -714,12 +762,13 @@
       }
     }
 
-    // --- CONFIGURAÇÃO DO PIX DO MASTER (VOCÊ) ---
+    // --- PIX MASTER ---
     function openMasterPixModal() {
       const cfg = JSON.parse(localStorage.getItem(MASTER_PIX_KEY) || '{}');
       document.getElementById('masterPixKey').value = cfg.key || '';
       document.getElementById('masterPixHolder').value = cfg.holder || '';
       document.getElementById('masterPixModal').classList.remove('hidden');
+      safeCreateIcons();
     }
 
     function closeMasterPixModal() {
@@ -732,18 +781,19 @@
         holder: document.getElementById('masterPixHolder').value.trim()
       };
       localStorage.setItem(MASTER_PIX_KEY, JSON.stringify(cfg));
-      alert("Seu PIX Master foi configurado com sucesso!");
+      alert("Seu PIX Master foi salvo com sucesso!");
       closeMasterPixModal();
       renderMasterPanel();
     }
 
-    // --- CONFIGURAÇÕES & BACKUP (PROVEDOR) ---
+    // --- CONFIGURAÇÕES PROVEDOR ---
     function openConfigModal() {
       const cfg = JSON.parse(localStorage.getItem(getPixConfigKey()) || '{}');
       document.getElementById('cfgPixKey').value = cfg.key || '';
       document.getElementById('cfgPixHolder').value = cfg.holder || '';
       document.getElementById('cfgNewPassword').value = '';
       document.getElementById('configModal').classList.remove('hidden');
+      safeCreateIcons();
     }
 
     function closeConfigModal() {
@@ -756,29 +806,27 @@
         holder: document.getElementById('cfgPixHolder').value.trim()
       };
       localStorage.setItem(getPixConfigKey(), JSON.stringify(cfg));
-      alert("Chave PIX configurada!");
+      alert("Chave PIX salva!");
       closeConfigModal();
     }
 
-    // Provedor altera a própria senha
     function changeTenantOwnPassword() {
       const newPass = document.getElementById('cfgNewPassword').value.trim();
       if (!newPass || newPass.length < 4) {
-        alert("A nova senha deve ter pelo menos 4 caracteres.");
+        alert("A senha deve ter no mínimo 4 dígitos.");
         return;
       }
 
       let tenants = getMasterTenants();
-      const t = tenants.find(item => item.user === currentUser);
+      const t = tenants.find(item => item.user.toLowerCase() === currentUser.toLowerCase());
       if (t) {
         t.pass = newPass;
         saveMasterTenants(tenants);
-        alert("Sua senha foi alterada com sucesso! Guarde-a em segurança.");
+        alert("Senha atualizada com sucesso!");
         closeConfigModal();
       }
     }
 
-    // Master altera a senha de qualquer provedor
     function openMasterEditModal(id) {
       const tenants = getMasterTenants();
       const t = tenants.find(item => item.id === id);
@@ -787,6 +835,7 @@
         document.getElementById('editTenantName').textContent = `${t.name} (@${t.user})`;
         document.getElementById('editTenantPass').value = t.pass;
         document.getElementById('masterEditModal').classList.remove('hidden');
+        safeCreateIcons();
       }
     }
 
@@ -808,7 +857,7 @@
       if (t) {
         t.pass = newPass;
         saveMasterTenants(tenants);
-        alert(`Senha do provedor ${t.name} redefinida com sucesso!`);
+        alert(`Senha do provedor ${t.name} alterada!`);
         closeMasterEditModal();
         renderMasterPanel();
       }
@@ -842,7 +891,7 @@
         try {
           const imported = JSON.parse(evt.target.result);
           if (Array.isArray(imported.clients)) {
-            if (confirm(`Restaurar backup com ${imported.clients.length} clientes? Os dados atuais serão substituídos.`)) {
+            if (confirm(`Restaurar backup com ${imported.clients.length} clientes?`)) {
               saveStoredClients(imported.clients);
               if (imported.config) {
                 localStorage.setItem(getPixConfigKey(), JSON.stringify(imported.config));
@@ -852,10 +901,10 @@
               renderClients();
             }
           } else {
-            alert("Formato de backup inválido.");
+            alert("Arquivo de backup inválido.");
           }
         } catch(err) {
-          alert("Erro ao processar o arquivo.");
+          alert("Erro ao ler o arquivo.");
         }
       };
       reader.readAsText(file);
@@ -865,6 +914,7 @@
     function openMasterModal() {
       document.getElementById('masterForm').reset();
       document.getElementById('masterModal').classList.remove('hidden');
+      safeCreateIcons();
     }
 
     function closeMasterModal() {
@@ -874,10 +924,10 @@
     function saveProvider(e) {
       e.preventDefault();
       const tenants = getMasterTenants();
-      const user = document.getElementById('provUser').value.trim();
+      const user = document.getElementById('provUser').value.trim().toLowerCase();
 
-      if (tenants.some(t => t.user === user) || user === 'master') {
-        alert("Este usuário já está cadastrado.");
+      if (tenants.some(t => t.user.toLowerCase() === user) || user === 'master') {
+        alert("Este usuário já está em uso.");
         return;
       }
 
@@ -1014,7 +1064,7 @@
         `;
         container.appendChild(card);
       });
-      lucide.createIcons();
+      safeCreateIcons();
     }
 
     // --- FUNÇÕES OPERACIONAIS DO PROVEDOR ---
@@ -1028,8 +1078,12 @@
     }
 
     function getStoredClients() {
-      const data = localStorage.getItem(getStorageKey());
-      return data ? JSON.parse(data) : [];
+      try {
+        const data = localStorage.getItem(getStorageKey());
+        return data ? JSON.parse(data) : [];
+      } catch (e) {
+        return [];
+      }
     }
 
     function saveStoredClients(clients) {
@@ -1039,6 +1093,7 @@
     function openModal() {
       document.getElementById('clientForm').reset();
       document.getElementById('clientModal').classList.remove('hidden');
+      safeCreateIcons();
     }
 
     function closeModal() {
@@ -1135,7 +1190,7 @@
     function renderClients() {
       if (currentRole !== 'tenant') return;
       const clients = getStoredClients();
-      const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
+      const searchQuery = (document.getElementById('searchInput').value || '').toLowerCase().trim();
       const todayDay = new Date().getDate();
 
       const moneyPaid = clients.filter(c => c.status === 'paid').reduce((acc, c) => acc + c.price, 0);
@@ -1216,7 +1271,7 @@
         `;
         container.appendChild(card);
       });
-      lucide.createIcons();
+      safeCreateIcons();
     }
 
     // Inicialização
