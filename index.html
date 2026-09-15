@@ -8,17 +8,13 @@
   <meta http-equiv="Expires" content="0">
   <title>LinkPay Pro - Gestão & Cobrança</title>
 
-  <!-- Configurações PWA e Mobile -->
   <meta name="theme-color" content="#0f172a">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="LinkPay">
 
-  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <script>
@@ -27,11 +23,7 @@
       theme: {
         extend: {
           colors: {
-            brand: {
-              50: '#ecfdf5',
-              500: '#10b981',
-              600: '#059669',
-            }
+            brand: { 50: '#ecfdf5', 500: '#10b981', 600: '#059669' }
           }
         }
       }
@@ -39,12 +31,8 @@
   </script>
 
   <style>
-    input, select, button {
-      -webkit-tap-highlight-color: transparent;
-    }
-    .touch-target {
-      min-height: 48px;
-    }
+    input, select, button { -webkit-tap-highlight-color: transparent; }
+    .touch-target { min-height: 48px; }
   </style>
 </head>
 
@@ -68,7 +56,7 @@
             type="text" 
             id="loginUser" 
             required 
-            placeholder="admin ou master" 
+            placeholder="admin, master ou seu usuário" 
             autocomplete="username"
             autocapitalize="none"
             class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-base"
@@ -266,7 +254,7 @@
         >
       </div>
 
-      <!-- Filtros com 'Em 2 Dias' e 'Hoje' -->
+      <!-- Filtros -->
       <section class="bg-slate-900 p-1 rounded-xl grid grid-cols-5 gap-1 border border-slate-800 text-center">
         <button onclick="setFilter('all')" id="filterAll" class="touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-slate-400 bg-transparent">
           Todos
@@ -297,7 +285,7 @@
     </main>
   </div>
 
-  <!-- MODAL DE CONFIGURAÇÃO DE PIX DO MASTER (SEU PIX) -->
+  <!-- MODAL PIX MASTER -->
   <div id="masterPixModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -311,7 +299,7 @@
       </div>
 
       <div class="space-y-3">
-        <p class="text-xs text-slate-400">Configure sua chave PIX para aparecer automaticamente nas mensagens de cobrança enviadas aos provedores.</p>
+        <p class="text-xs text-slate-400">Configure sua chave PIX para aparecer automaticamente nas cobranças aos provedores.</p>
         <div>
           <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Sua Chave PIX</label>
           <input 
@@ -326,7 +314,7 @@
           <input 
             type="text" 
             id="masterPixHolder" 
-            placeholder="Ex: Welton Silva / LinkPay Soluções" 
+            placeholder="Ex: Welton Silva / LinkPay" 
             class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 text-sm"
           >
         </div>
@@ -339,7 +327,7 @@
     </div>
   </div>
 
-  <!-- MODAL MASTER: EDITAR / REDEFINIR SENHA DO PROVEDOR -->
+  <!-- MODAL MASTER: EDITAR SENHA -->
   <div id="masterEditModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -387,7 +375,6 @@
         </button>
       </div>
 
-      <!-- PIX -->
       <div class="space-y-3">
         <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Chave PIX para Cobrança</h3>
         <div>
@@ -413,7 +400,6 @@
         </button>
       </div>
 
-      <!-- Trocar Senha -->
       <div class="border-t border-slate-800 pt-4 space-y-3">
         <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Alterar Minha Senha de Acesso</h3>
         <div>
@@ -430,7 +416,6 @@
         </button>
       </div>
 
-      <!-- Backup -->
       <div class="border-t border-slate-800 pt-4 space-y-3">
         <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Segurança de Dados (Backup)</h3>
         <p class="text-[11px] text-slate-500">Exporte os cadastros para guardar no computador ou importar em outro celular.</p>
@@ -503,7 +488,7 @@
     </div>
   </div>
 
-  <!-- MODAL DO PROVEDOR: CADASTRO DE CLIENTE -->
+  <!-- MODAL DO PROVEDOR: NOVO CLIENTE -->
   <div id="clientModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-6 max-h-[92vh] overflow-y-auto space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -566,7 +551,25 @@
   </div>
 
   <script>
-    // --- DESINSTALAÇÃO FORÇADA DE SERVICE WORKERS E CACHES ANTIGOS DO CELULAR ---
+    // =========================================================================
+    // ⭐️ LISTA GLOBAL DE PROVEDORES LIBERADOS (EDITAR AQUI AO VENDER NOVOS ACESSOS)
+    // =========================================================================
+    const GLOBAL_LICENSED_TENANTS = [
+      {
+        id: 'prov_demo',
+        name: 'Provedor Demonstração',
+        user: 'admin',
+        pass: '123456',
+        fee: 59.90,
+        dueDay: 10,
+        phone: '11999999999',
+        status: 'active',
+        paidStatus: 'paid'
+      }
+      // Para adicionar clientes, basta duplicar o bloco acima colocando vírgula!
+    ];
+
+    // --- DESINSTALAÇÃO FORÇADA DE SERVICE WORKERS E CACHES ANTIGOS ---
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(registrations => {
         for (let registration of registrations) {
@@ -580,10 +583,8 @@
       }).catch(() => {});
     }
 
-    // --- NÚMERO DO SEU SUPORTE MASTER ---
     const MASTER_SUPPORT_PHONE = "5511999999999"; 
 
-    // --- CREDENCIAIS MASTER (VOCÊ) ---
     const MASTER_CONFIG = {
       username: "master",
       password: "master@2026"
@@ -596,7 +597,6 @@
     let currentRole = localStorage.getItem('linkpay_logged_role') || null;
     let currentFilter = 'all';
 
-    // Recuperação de compatibilidade com versões anteriores
     if (currentUser && !currentRole) {
       currentRole = (currentUser.toLowerCase() === 'master') ? 'master' : 'tenant';
       localStorage.setItem('linkpay_logged_role', currentRole);
@@ -607,9 +607,7 @@
         if (window.lucide && typeof lucide.createIcons === 'function') {
           lucide.createIcons();
         }
-      } catch (e) {
-        console.warn('Lucide icons error ignored:', e);
-      }
+      } catch (e) {}
     }
 
     function forceCleanReset() {
@@ -621,27 +619,22 @@
       }
     }
 
+    // Sincroniza os dados globais do código com o armazenamento local
     function getMasterTenants() {
+      let localData = [];
       try {
-        const data = localStorage.getItem(MASTER_STORAGE_KEY);
-        if (data) return JSON.parse(data);
+        const stored = localStorage.getItem(MASTER_STORAGE_KEY);
+        if (stored) localData = JSON.parse(stored);
       } catch (e) {}
 
-      const defaults = [
-        {
-          id: 'prov_1',
-          name: 'Provedor Demonstração',
-          user: 'admin',
-          pass: '123456',
-          fee: 59.90,
-          dueDay: 15,
-          phone: '11987654321',
-          status: 'active',
-          paidStatus: 'pending'
-        }
-      ];
-      localStorage.setItem(MASTER_STORAGE_KEY, JSON.stringify(defaults));
-      return defaults;
+      // Mescla as contas do código com as cadastradas localmente
+      const mergedMap = new Map();
+      GLOBAL_LICENSED_TENANTS.forEach(t => mergedMap.set(t.user.toLowerCase(), t));
+      localData.forEach(t => mergedMap.set(t.user.toLowerCase(), t));
+
+      const mergedList = Array.from(mergedMap.values());
+      localStorage.setItem(MASTER_STORAGE_KEY, JSON.stringify(mergedList));
+      return mergedList;
     }
 
     function saveMasterTenants(tenants) {
@@ -694,7 +687,6 @@
       }
     }
 
-    // --- AUTENTICAÇÃO COM TRATAMENTO MOBILE ---
     function checkAuth() {
       const loginScreen = document.getElementById('loginScreen');
       const masterContainer = document.getElementById('masterContainer');
@@ -765,7 +757,6 @@
       }
     }
 
-    // --- PIX MASTER ---
     function openMasterPixModal() {
       const cfg = JSON.parse(localStorage.getItem(MASTER_PIX_KEY) || '{}');
       document.getElementById('masterPixKey').value = cfg.key || '';
@@ -789,7 +780,6 @@
       renderMasterPanel();
     }
 
-    // --- CONFIGURAÇÕES PROVEDOR ---
     function openConfigModal() {
       const cfg = JSON.parse(localStorage.getItem(getPixConfigKey()) || '{}');
       document.getElementById('cfgPixKey').value = cfg.key || '';
@@ -913,7 +903,6 @@
       reader.readAsText(file);
     }
 
-    // --- FUNÇÕES MASTER ---
     function openMasterModal() {
       document.getElementById('masterForm').reset();
       document.getElementById('masterModal').classList.remove('hidden');
@@ -941,7 +930,7 @@
         pass: document.getElementById('provPass').value.trim(),
         fee: parseFloat(document.getElementById('provFee').value),
         dueDay: parseInt(document.getElementById('provDueDay').value, 10),
-        phone: document.getElementById('provPhone').value.replace(/\\D/g, ''),
+        phone: document.getElementById('provPhone').value.replace(/\D/g, ''),
         status: 'active',
         paidStatus: 'pending'
       };
@@ -980,8 +969,8 @@
       let message = `Olá ${name}, segue o lembrete da mensalidade do seu sistema LinkPay Pro referente ao mês de ${currentMonth}. Valor da licença: R$ ${formattedFee}, com vencimento no dia ${dueDay}.`;
 
       if (masterPix.key) {
-        message += `\\n\\n📌 Pagamento via PIX:\\nChave: ${masterPix.key}`;
-        if (masterPix.holder) message += `\\nTitular: ${masterPix.holder}`;
+        message += `\n\n📌 Pagamento via PIX:\nChave: ${masterPix.key}`;
+        if (masterPix.holder) message += `\nTitular: ${masterPix.holder}`;
       }
 
       window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(message)}`, '_blank');
@@ -1070,7 +1059,6 @@
       safeCreateIcons();
     }
 
-    // --- FUNÇÕES OPERACIONAIS PROVEDOR ---
     function getCurrentCycleKey() {
       const now = new Date();
       return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -1111,7 +1099,7 @@
         plan: document.getElementById('clientPlan').value,
         price: parseFloat(document.getElementById('clientPrice').value),
         dueDay: parseInt(document.getElementById('clientDueDay').value, 10),
-        phone: document.getElementById('clientPhone').value.replace(/\\D/g, ''),
+        phone: document.getElementById('clientPhone').value.replace(/\D/g, ''),
         status: document.getElementById('clientStatus').value
       };
 
@@ -1154,22 +1142,18 @@
 
       let message = "";
       if (dueDay === todayDay + 2) {
-        // Lembrete preventivo de 2 dias antes (sem megas)
         message = `Olá ${name}! Passando para lembrar que sua mensalidade referente ao mês de ${currentMonth} vence em 2 dias (Dia ${dueDay}). Valor: R$ ${formattedPrice}.`;
       } else if (dueDay === todayDay) {
-        // Lembrete do próprio dia (sem megas)
         message = `Olá ${name}! Sua mensalidade vence hoje (Dia ${dueDay}). Valor: R$ ${formattedPrice}.`;
       } else if (todayDay > dueDay) {
-        // Mensagem de atraso (sem megas)
         message = `Olá ${name}, notamos que sua mensalidade referente a ${currentMonth} (vencimento dia ${dueDay}) ainda consta em aberto. Valor: R$ ${formattedPrice}.`;
       } else {
-        // Mensagem padrão (sem megas)
         message = `Olá ${name}, segue o lembrete da sua mensalidade referente ao mês de ${currentMonth}. Valor: R$ ${formattedPrice}, com vencimento no dia ${dueDay}.`;
       }
       
       if (cfgPix.key) {
-        message += `\\n\\n📌 Pagamento via PIX:\\nChave: ${cfgPix.key}`;
-        if (cfgPix.holder) message += `\\nTitular: ${cfgPix.holder}`;
+        message += `\n\n📌 Pagamento via PIX:\nChave: ${cfgPix.key}`;
+        if (cfgPix.holder) message += `\nTitular: ${cfgPix.holder}`;
       }
 
       window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(message)}`, '_blank');
@@ -1296,7 +1280,6 @@
       safeCreateIcons();
     }
 
-    // Inicialização
     document.addEventListener('DOMContentLoaded', () => {
       const monthName = getCurrentCycleName();
       document.getElementById('activeMonthDisplay').textContent = monthName;
