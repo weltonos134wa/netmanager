@@ -38,6 +38,17 @@
 
 <body class="bg-slate-950 text-slate-100 min-h-screen antialiased selection:bg-emerald-500 selection:text-white">
 
+  <!-- BARRA DE AUDITORIA: VOLTAR AO MASTER -->
+  <div id="masterImpersonationBar" class="hidden sticky top-0 z-50 bg-amber-500 text-slate-950 px-4 py-2 text-xs font-bold flex items-center justify-between shadow-lg">
+    <div class="flex items-center gap-2">
+      <i data-lucide="shield-alert" class="w-4 h-4"></i>
+      <span>Visualizando provedor: <strong id="impersonationUserName"></strong></span>
+    </div>
+    <button onclick="returnToMasterPanel()" class="bg-slate-950 text-amber-400 px-3 py-1 rounded-lg font-extrabold text-[11px] active:scale-95 transition-all">
+      Voltar ao Painel Master
+    </button>
+  </div>
+
   <!-- 1. TELA DE LOGIN -->
   <div id="loginScreen" class="fixed inset-0 z-40 bg-slate-950 flex items-center justify-center p-4">
     <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5">
@@ -88,7 +99,7 @@
     </div>
   </div>
 
-  <!-- 2. PAINEL MASTER (VOCÊ) -->
+  <!-- 2. PAINEL DO ADMINISTRADOR MASTER COMPLETO -->
   <div id="masterContainer" class="hidden pb-24">
     <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3">
       <div class="max-w-md mx-auto flex items-center justify-between gap-2">
@@ -98,27 +109,62 @@
           </div>
           <div>
             <h1 class="text-lg font-bold tracking-tight leading-none text-white">Painel Master</h1>
-            <span class="text-xs text-amber-400 font-medium">Servidor Online</span>
+            <span class="text-xs text-amber-400 font-medium">Gestão Geral do Sistema</span>
           </div>
         </div>
 
         <div class="flex items-center gap-1.5">
-          <button onclick="handleLogout()" class="touch-target bg-slate-800/80 hover:bg-rose-500/20 hover:text-rose-400 text-slate-400 px-3 rounded-xl flex items-center gap-1 border border-slate-700 text-xs transition-all">
-            <i data-lucide="log-out" class="w-4 h-4"></i> Sair
+          <button onclick="openMasterPixModal()" class="touch-target bg-slate-800/80 hover:bg-slate-700 text-amber-400 px-2.5 rounded-xl flex items-center gap-1 border border-slate-700 text-xs transition-all" title="Meu PIX">
+            <i data-lucide="qr-code" class="w-4 h-4"></i>
+          </button>
+          <button onclick="handleLogout()" class="touch-target bg-slate-800/80 hover:bg-rose-500/20 hover:text-rose-400 text-slate-400 px-2.5 rounded-xl flex items-center gap-1 border border-slate-700 text-xs transition-all" title="Sair">
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+          </button>
+          <button onclick="openMasterNewTenantModal()" class="touch-target bg-amber-500 hover:bg-amber-600 active:scale-95 transition-all text-slate-950 font-bold px-3 rounded-xl flex items-center gap-1 shadow-lg shadow-amber-500/20 text-xs">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Provedor</span>
           </button>
         </div>
       </div>
     </header>
 
     <main class="max-w-md mx-auto px-4 pt-4 space-y-4">
-      <div class="flex items-center justify-between pt-1">
-        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Provedores Conectados à Nuvem</h2>
+      <!-- Financeiro das Licenças Master -->
+      <section class="grid grid-cols-3 gap-2">
+        <div class="bg-slate-900 border border-emerald-500/30 rounded-2xl p-3 text-center bg-emerald-950/10">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block mb-0.5">Recebido</span>
+          <span id="masterPaidRevenue" class="text-base font-black text-emerald-400">R$ 0,00</span>
+        </div>
+        <div class="bg-slate-900 border border-rose-500/30 rounded-2xl p-3 text-center bg-rose-950/10">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-rose-400 block mb-0.5">A Receber</span>
+          <span id="masterPendingRevenue" class="text-base font-black text-rose-400">R$ 0,00</span>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 text-center">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Previsto</span>
+          <span id="masterMonthlyTotal" class="text-base font-black text-white">R$ 0,00</span>
+        </div>
+      </section>
+
+      <!-- Alerta PIX Master -->
+      <div id="masterPixAlert" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 text-amber-400 text-xs font-semibold">
+          <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0"></i>
+          <span>Configure seu PIX para cobrança das licenças.</span>
+        </div>
+        <button onclick="openMasterPixModal()" class="px-2.5 py-1 bg-amber-500 text-slate-950 rounded-lg text-xs font-bold shrink-0">
+          Configurar
+        </button>
       </div>
+
+      <div class="flex items-center justify-between pt-1">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Provedores Cadastrados (<span id="masterTotalTenants">0</span>)</h2>
+      </div>
+
       <section id="masterTenantsList" class="space-y-3"></section>
     </main>
   </div>
 
-  <!-- 3. PAINEL DO PROVEDOR -->
+  <!-- 3. PAINEL DO PROVEDOR (OPERACIONAL) -->
   <div id="appContainer" class="hidden pb-24">
     <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3">
       <div class="max-w-md mx-auto flex items-center justify-between gap-2">
@@ -145,7 +191,7 @@
     </header>
 
     <main class="max-w-md mx-auto px-4 pt-4 space-y-4">
-      <!-- Faturamento -->
+      <!-- Faturamento do Provedor -->
       <section class="bg-slate-900 border border-slate-800/80 rounded-2xl p-3.5 space-y-3">
         <div class="flex items-center justify-between border-b border-slate-800 pb-2">
           <span class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -186,7 +232,7 @@
         </div>
       </section>
 
-      <!-- ABAS DE SERVIÇO: MEGAS / IPTV -->
+      <!-- Abas Megas / IPTV -->
       <section class="bg-slate-900 p-1 rounded-2xl grid grid-cols-3 gap-1 border border-slate-800 text-center">
         <button onclick="setCategoryFilter('all')" id="catAll" class="touch-target text-xs font-bold rounded-xl py-2 transition-all text-white bg-slate-800">
           Todos (<span id="countCatAll">0</span>)
@@ -237,7 +283,101 @@
     </main>
   </div>
 
-  <!-- MODAL: NOVO CLIENTE (COM SELETOR DE MEGAS / IPTV) -->
+  <!-- MODAL MASTER: CADASTRAR NOVO PROVEDOR NA NUVEM -->
+  <div id="masterNewTenantModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+          <i data-lucide="user-plus" class="w-5 h-5 text-amber-400"></i> Cadastrar Provedor
+        </h2>
+        <button onclick="closeMasterNewTenantModal()" class="text-slate-400 hover:text-white p-2 rounded-lg bg-slate-800/50">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="masterNewTenantForm" onsubmit="saveNewTenantMaster(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Nome do Provedor / Fantasia *</label>
+          <input type="text" id="mTenantName" required placeholder="Ex: NetFibra Telecom" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 text-base">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Tipo de Serviço *</label>
+            <select id="mTenantType" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 focus:outline-none focus:border-amber-500 text-sm">
+              <option value="telecom">Internet / Megas</option>
+              <option value="iptv">IPTV / Streaming</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Licença R$ *</label>
+            <input type="number" id="mTenantFee" step="0.01" required placeholder="49.90" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 text-base">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Usuário Login *</label>
+            <input type="text" id="mTenantUser" required placeholder="netfibra" autocapitalize="none" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 text-base">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Senha *</label>
+            <input type="text" id="mTenantPass" required placeholder="123456" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 text-base">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Dia Vencimento *</label>
+            <input type="number" id="mTenantDueDay" min="1" max="31" required placeholder="20" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 text-base">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">WhatsApp Dono *</label>
+            <input type="tel" id="mTenantPhone" required placeholder="11987654321" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 text-base">
+          </div>
+        </div>
+
+        <div class="pt-2">
+          <button type="submit" id="btnSaveNewTenant" class="w-full touch-target bg-amber-500 hover:bg-amber-600 active:scale-[0.98] transition-all text-slate-950 font-bold rounded-xl text-base flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20">
+            <i data-lucide="check" class="w-5 h-5"></i> Salvar Provedor na Nuvem
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL PIX MASTER -->
+  <div id="masterPixModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+          <i data-lucide="qr-code" class="w-5 h-5 text-amber-400"></i> Meu PIX Master
+        </h2>
+        <button onclick="closeMasterPixModal()" class="text-slate-400 hover:text-white p-2 rounded-lg bg-slate-800/50">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <p class="text-xs text-slate-400">Sua chave PIX para envio automático ao cobrar a mensalidade dos provedores.</p>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Chave PIX</label>
+          <input type="text" id="mPixKey" placeholder="Ex: CPF, Telefone, E-mail ou Aleatória" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Nome do Titular / Empresa</label>
+          <input type="text" id="mPixHolder" placeholder="Ex: LinkPay Pro / Welton Silva" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 text-sm">
+        </div>
+        <div class="pt-2">
+          <button onclick="saveMasterPix()" class="w-full touch-target bg-amber-500 hover:bg-amber-600 active:scale-[0.98] text-slate-950 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all">
+            <i data-lucide="save" class="w-4 h-4"></i> Salvar Meu PIX
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: NOVO CLIENTE DO PROVEDOR -->
   <div id="clientModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-6 max-h-[92vh] overflow-y-auto space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -303,8 +443,9 @@
     let authUser = localStorage.getItem("linkpay_user") || null;
     let authName = localStorage.getItem("linkpay_name") || null;
 
+    let cachedMasterTenants = [];
     let cachedClients = [];
-    let currentCategory = 'all'; // 'all', 'telecom', 'iptv'
+    let currentCategory = 'all';
     let currentStatusFilter = 'all';
 
     function safeCreateIcons() {
@@ -373,6 +514,7 @@
         localStorage.setItem("linkpay_role", authRole);
         localStorage.setItem("linkpay_user", authUser);
         localStorage.setItem("linkpay_name", authName);
+        localStorage.removeItem("linkpay_impersonating");
 
         checkAuth();
       } catch (err) {
@@ -397,16 +539,24 @@
       const loginScreen = document.getElementById("loginScreen");
       const masterContainer = document.getElementById("masterContainer");
       const appContainer = document.getElementById("appContainer");
+      const impBar = document.getElementById("masterImpersonationBar");
 
       loginScreen.classList.add("hidden");
       masterContainer.classList.add("hidden");
       appContainer.classList.add("hidden");
+      impBar.classList.add("hidden");
 
-      if (authRole === "master" && authToken) {
+      const isImpersonating = localStorage.getItem("linkpay_impersonating") === "true";
+
+      if (authRole === "master" && !isImpersonating && authToken) {
         masterContainer.classList.remove("hidden");
         loadMasterTenants();
-      } else if (authRole === "tenant" && authToken) {
+      } else if (authToken) {
         appContainer.classList.remove("hidden");
+        if (isImpersonating) {
+          impBar.classList.remove("hidden");
+          document.getElementById("impersonationUserName").textContent = authName || authUser;
+        }
         document.getElementById("tenantNameHeader").textContent = authName || "LinkPay";
         loadClients();
       } else {
@@ -415,42 +565,233 @@
       safeCreateIcons();
     }
 
+    // ==========================================
+    // ⭐️ FUNÇÕES DO MASTER (ADMINISTRADOR)
+    // ==========================================
     async function loadMasterTenants() {
       const container = document.getElementById("masterTenantsList");
-      container.innerHTML = '<p class="text-xs text-slate-400">Carregando da nuvem...</p>';
+      container.innerHTML = '<p class="text-xs text-slate-400 py-4 text-center">Carregando da nuvem...</p>';
 
       try {
         const res = await fetch(`${API_BASE_URL}/api/master/tenants`, {
           headers: { "Authorization": `Bearer ${authToken}` }
         });
-        const tenants = await res.json();
-        container.innerHTML = "";
-
-        tenants.forEach(t => {
-          const card = document.createElement("div");
-          card.className = "bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2";
-          card.innerHTML = `
-            <div class="flex items-center justify-between">
-              <h3 class="font-bold text-white">${t.name}</h3>
-              <span class="text-xs text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-md">Ativo</span>
-            </div>
-            <p class="text-xs text-slate-400">Usuário: <strong class="text-white">${t.username}</strong> • Senha: <span class="text-amber-400">${t.password}</span></p>
-            <p class="text-xs text-slate-400">Vencimento Licença: Dia ${t.due_day} • R$ ${parseFloat(t.fee).toFixed(2)}</p>
-          `;
-          container.appendChild(card);
-        });
+        cachedMasterTenants = await res.json();
+        renderMasterPanel();
       } catch (err) {
-        container.innerHTML = '<p class="text-xs text-rose-400">Erro ao carregar provedores.</p>';
+        container.innerHTML = '<p class="text-xs text-rose-400 py-4 text-center">Erro ao carregar provedores da nuvem.</p>';
       }
+    }
+
+    function renderMasterPanel() {
+      const container = document.getElementById("masterTenantsList");
+      let paidRevenue = 0;
+      let pendingRevenue = 0;
+      let totalPotential = 0;
+
+      const masterPix = JSON.parse(localStorage.getItem("linkpay_master_pix") || '{}');
+      const pixAlert = document.getElementById("masterPixAlert");
+      if (!masterPix.key) pixAlert.classList.remove("hidden");
+      else pixAlert.classList.add("hidden");
+
+      cachedMasterTenants.forEach(t => {
+        const fee = parseFloat(t.fee) || 0;
+        totalPotential += fee;
+        if (t.paid_status === 'paid') paidRevenue += fee;
+        else pendingRevenue += fee;
+      });
+
+      document.getElementById('masterTotalTenants').textContent = cachedMasterTenants.length;
+      document.getElementById('masterPaidRevenue').textContent = paidRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      document.getElementById('masterPendingRevenue').textContent = pendingRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      document.getElementById('masterMonthlyTotal').textContent = totalPotential.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+      container.innerHTML = "";
+
+      cachedMasterTenants.forEach(t => {
+        const isPaid = t.paid_status === 'paid';
+        const isBlocked = t.status === 'blocked';
+        const formattedFee = (parseFloat(t.fee) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+        const typeBadge = t.service_type === 'iptv' 
+          ? '<span class="px-2 py-0.5 text-[10px] font-bold bg-purple-500/20 text-purple-400 rounded-md border border-purple-500/30">IPTV</span>' 
+          : '<span class="px-2 py-0.5 text-[10px] font-bold bg-blue-500/20 text-blue-400 rounded-md border border-blue-500/30">Telecom</span>';
+
+        const card = document.createElement("div");
+        card.className = `bg-slate-900 border ${isBlocked ? 'border-rose-900 opacity-60' : isPaid ? 'border-emerald-500/30' : 'border-slate-800'} rounded-2xl p-4 space-y-3`;
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="font-bold text-base text-white">${t.name}</h3>
+                ${typeBadge}
+                ${isBlocked ? '<span class="px-2 py-0.5 text-[10px] font-bold bg-rose-500/20 text-rose-400 rounded-md">Bloqueado</span>' : '<span class="px-2 py-0.5 text-[10px] font-bold bg-emerald-500/20 text-emerald-400 rounded-md">Ativo</span>'}
+              </div>
+              <p class="text-xs text-slate-400 font-mono mt-1">Usuário: <strong class="text-slate-200">${t.username}</strong> • Senha: <span class="text-amber-400 font-semibold">${t.password}</span></p>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between border-t border-slate-800/80 pt-2.5 text-xs">
+            <span class="text-slate-400">Licença: <strong class="text-white">R$ ${formattedFee}</strong> (Dia ${t.due_day})</span>
+            <button onclick="chargeMasterTenantWhatsApp('${t.name}', ${t.fee}, ${t.due_day}, '${t.phone}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-semibold">
+              <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> Cobrar Licença
+            </button>
+          </div>
+
+          <div class="grid grid-cols-3 gap-1.5 pt-1">
+            <button onclick="enterAsTenantByMaster('${t.username}', '${t.name}')" class="touch-target rounded-xl font-bold text-xs bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 flex items-center justify-center gap-1">
+              <i data-lucide="external-link" class="w-3.5 h-3.5"></i> Ver Painel
+            </button>
+            <button onclick="toggleMasterPaidStatus('${t.id}')" class="touch-target rounded-xl font-bold text-xs uppercase flex items-center justify-center gap-1 ${isPaid ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}">
+              ${isPaid ? 'Pago' : 'Pendente'}
+            </button>
+            <button onclick="toggleMasterTenantStatus('${t.id}')" class="touch-target rounded-xl font-bold text-xs uppercase flex items-center justify-center gap-1 ${isBlocked ? 'bg-slate-700 text-emerald-400' : 'bg-slate-800 text-rose-400 border border-slate-700'}">
+              ${isBlocked ? 'Ativar' : 'Bloquear'}
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
       safeCreateIcons();
     }
 
+    function enterAsTenantByMaster(username, name) {
+      localStorage.setItem("linkpay_impersonating", "true");
+      localStorage.setItem("linkpay_impersonating_user", username);
+      localStorage.setItem("linkpay_impersonating_name", name);
+      checkAuth();
+    }
+
+    function returnToMasterPanel() {
+      localStorage.removeItem("linkpay_impersonating");
+      localStorage.removeItem("linkpay_impersonating_user");
+      localStorage.removeItem("linkpay_impersonating_name");
+      checkAuth();
+    }
+
+    function chargeMasterTenantWhatsApp(name, fee, dueDay, phone) {
+      if (!phone) {
+        alert("Nenhum WhatsApp cadastrado para este provedor.");
+        return;
+      }
+      const formattedFee = (parseFloat(fee) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+      const currentMonth = new Date().toLocaleDateString('pt-BR', { month: 'long' });
+      const masterPix = JSON.parse(localStorage.getItem("linkpay_master_pix") || '{}');
+
+      let message = `Olá ${name}, segue o lembrete da mensalidade do seu sistema LinkPay Pro referente ao mês de ${currentMonth}. Valor da licença: R$ ${formattedFee}, com vencimento no dia ${dueDay}.`;
+
+      if (masterPix.key) {
+        message += `\n\n📌 Pagamento via PIX:\nChave: ${masterPix.key}`;
+        if (masterPix.holder) message += `\nTitular: ${masterPix.holder}`;
+      }
+
+      window.open(`https://wa.me/55${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
+    }
+
+    function toggleMasterPaidStatus(tenantId) {
+      const t = cachedMasterTenants.find(item => item.id === tenantId);
+      if (t) {
+        t.paid_status = t.paid_status === 'paid' ? 'pending' : 'paid';
+        renderMasterPanel();
+      }
+    }
+
+    function toggleMasterTenantStatus(tenantId) {
+      const t = cachedMasterTenants.find(item => item.id === tenantId);
+      if (t) {
+        t.status = t.status === 'active' ? 'blocked' : 'active';
+        renderMasterPanel();
+      }
+    }
+
+    function openMasterPixModal() {
+      const cfg = JSON.parse(localStorage.getItem("linkpay_master_pix") || '{}');
+      document.getElementById("mPixKey").value = cfg.key || '';
+      document.getElementById("mPixHolder").value = cfg.holder || '';
+      document.getElementById("masterPixModal").classList.remove("hidden");
+      safeCreateIcons();
+    }
+
+    function closeMasterPixModal() {
+      document.getElementById("masterPixModal").classList.add("hidden");
+    }
+
+    function saveMasterPix() {
+      const cfg = {
+        key: document.getElementById("mPixKey").value.trim(),
+        holder: document.getElementById("mPixHolder").value.trim()
+      };
+      localStorage.setItem("linkpay_master_pix", JSON.stringify(cfg));
+      alert("Chave PIX Master salva com sucesso!");
+      closeMasterPixModal();
+      renderMasterPanel();
+    }
+
+    function openMasterNewTenantModal() {
+      document.getElementById("masterNewTenantForm").reset();
+      document.getElementById("masterNewTenantModal").classList.remove("hidden");
+      safeCreateIcons();
+    }
+
+    function closeMasterNewTenantModal() {
+      document.getElementById("masterNewTenantModal").classList.add("hidden");
+    }
+
+    async function saveNewTenantMaster(e) {
+      e.preventDefault();
+      const btn = document.getElementById("btnSaveNewTenant");
+      btn.disabled = true;
+      btn.textContent = "Criando no servidor...";
+
+      const payload = {
+        name: document.getElementById("mTenantName").value.trim(),
+        username: document.getElementById("mTenantUser").value.trim().toLowerCase(),
+        password: document.getElementById("mTenantPass").value.trim(),
+        service_type: document.getElementById("mTenantType").value,
+        fee: parseFloat(document.getElementById("mTenantFee").value),
+        due_day: parseInt(document.getElementById("mTenantDueDay").value, 10),
+        phone: document.getElementById("mTenantPhone").value.replace(/\D/g, "")
+      };
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/master/tenants`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${authToken}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          alert("Novo provedor criado com sucesso na nuvem!");
+          closeMasterNewTenantModal();
+          loadMasterTenants();
+        } else {
+          alert(data.error || "Erro ao criar provedor.");
+        }
+      } catch (err) {
+        alert("Erro de conexão ao salvar provedor.");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Salvar Provedor na Nuvem";
+      }
+    }
+
+    // ==========================================
+    // ⭐️ FUNÇÕES DO PROVEDOR (ASSINANTES)
+    // ==========================================
     async function loadClients() {
       const container = document.getElementById("clientsList");
       container.innerHTML = '<p class="text-xs text-slate-400 py-4 text-center">Sincronizando com a nuvem...</p>';
 
+      const isImpersonating = localStorage.getItem("linkpay_impersonating") === "true";
+      const targetUser = isImpersonating ? localStorage.getItem("linkpay_impersonating_user") : authUser;
+
       try {
-        const res = await fetch(`${API_BASE_URL}/api/clients`, {
+        const res = await fetch(`${API_BASE_URL}/api/clients?tenant=${targetUser}`, {
           headers: { "Authorization": `Bearer ${authToken}` }
         });
         cachedClients = await res.json();
@@ -625,7 +966,6 @@
       safeCreateIcons();
     }
 
-    // MENSAGEM DO WHATSAPP SEM OS MEGAS (DIRETA E LIMPA)
     function openWhatsApp(name, price, dueDay, phone) {
       if (!phone) {
         alert("Nenhum WhatsApp informado.");
@@ -649,7 +989,6 @@
       window.open(`https://wa.me/55${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
     }
 
-    // RECIBO DO WHATSAPP SEM OS MEGAS
     function sendReceiptWhatsApp(name, price, phone) {
       if (!phone) {
         alert("Nenhum WhatsApp informado.");
@@ -661,7 +1000,6 @@
       window.open(`https://wa.me/55${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
     }
 
-    // ATUALIZAÇÃO OTIMISTA SEM TRAVAMENTO DE NUVEM
     async function toggleClientStatus(clientId) {
       const client = cachedClients.find(c => c.id === clientId);
       if (!client) return;
@@ -671,28 +1009,15 @@
       renderClients();
 
       try {
-        const res = await fetch(`${API_BASE_URL}/api/clients/${clientId}/toggle-status`, {
+        await fetch(`${API_BASE_URL}/api/clients/${clientId}/toggle-status`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${authToken}`
           }
         });
-
-        if (!res.ok) {
-          const altRes = await fetch(`${API_BASE_URL}/api/clients/${clientId}/toggle-status`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${authToken}`
-            }
-          });
-          if (!altRes.ok) {
-            console.warn("Status mantido localmente.");
-          }
-        }
       } catch (e) {
-        console.warn("Atualizado na interface local:", e);
+        console.warn("Status mantido na tela.");
       }
     }
 
@@ -719,7 +1044,11 @@
       btn.disabled = true;
       btn.textContent = "Gravando na nuvem...";
 
+      const isImpersonating = localStorage.getItem("linkpay_impersonating") === "true";
+      const targetUser = isImpersonating ? localStorage.getItem("linkpay_impersonating_user") : authUser;
+
       const payload = {
+        tenant_username: targetUser,
         name: document.getElementById("clientName").value.trim(),
         plan: document.getElementById("clientPlan").value,
         price: parseFloat(document.getElementById("clientPrice").value),
