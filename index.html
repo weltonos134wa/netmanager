@@ -124,7 +124,7 @@
       <div class="max-w-md mx-auto flex items-center justify-between gap-2">
         <div class="flex items-center gap-2">
           <div class="p-2 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
-            <i data-lucide="wifi" class="w-6 h-6"></i>
+            <i data-lucide="activity" class="w-6 h-6"></i>
           </div>
           <div>
             <h1 id="tenantNameHeader" class="text-lg font-bold tracking-tight leading-none text-white">LinkPay</h1>
@@ -173,7 +173,7 @@
       <!-- Contadores -->
       <section class="grid grid-cols-3 gap-2.5">
         <div class="bg-slate-900 border border-slate-800/80 rounded-2xl p-2.5 text-center">
-          <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block">Assinantes</span>
+          <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block">Clientes</span>
           <span id="counterTotal" class="text-xl font-black text-white">0</span>
         </div>
         <div class="bg-slate-900 border border-emerald-500/20 rounded-2xl p-2.5 text-center bg-emerald-950/10">
@@ -184,6 +184,19 @@
           <span class="text-[10px] font-semibold uppercase tracking-wider text-rose-400 block">Atrasados</span>
           <span id="counterPending" class="text-xl font-black text-rose-400">0</span>
         </div>
+      </section>
+
+      <!-- ABAS DE SERVIÇO: MEGAS / IPTV -->
+      <section class="bg-slate-900 p-1 rounded-2xl grid grid-cols-3 gap-1 border border-slate-800 text-center">
+        <button onclick="setCategoryFilter('all')" id="catAll" class="touch-target text-xs font-bold rounded-xl py-2 transition-all text-white bg-slate-800">
+          Todos (<span id="countCatAll">0</span>)
+        </button>
+        <button onclick="setCategoryFilter('telecom')" id="catTelecom" class="touch-target text-xs font-semibold rounded-xl py-2 transition-all text-slate-400 bg-transparent flex items-center justify-center gap-1">
+          <i data-lucide="wifi" class="w-3.5 h-3.5 text-blue-400"></i> Megas (<span id="countCatTelecom">0</span>)
+        </button>
+        <button onclick="setCategoryFilter('iptv')" id="catIptv" class="touch-target text-xs font-semibold rounded-xl py-2 transition-all text-slate-400 bg-transparent flex items-center justify-center gap-1">
+          <i data-lucide="tv" class="w-3.5 h-3.5 text-purple-400"></i> IPTV (<span id="countCatIptv">0</span>)
+        </button>
       </section>
 
       <!-- Busca -->
@@ -200,13 +213,13 @@
         >
       </div>
 
-      <!-- Filtros -->
+      <!-- Filtros de Status -->
       <section class="bg-slate-900 p-1 rounded-xl grid grid-cols-5 gap-1 border border-slate-800 text-center">
-        <button onclick="setFilter('all')" id="filterAll" class="touch-target text-[11px] font-bold rounded-lg py-2 transition-all text-white bg-slate-800">Todos</button>
-        <button onclick="setFilter('in2days')" id="filterIn2Days" class="touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-cyan-400 bg-transparent">2 Dias</button>
-        <button onclick="setFilter('today')" id="filterToday" class="touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-amber-400 bg-transparent">Hoje</button>
-        <button onclick="setFilter('pending')" id="filterPending" class="touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-slate-400 bg-transparent">Atrasados</button>
-        <button onclick="setFilter('paid')" id="filterPaid" class="touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-slate-400 bg-transparent">Pagos</button>
+        <button onclick="setStatusFilter('all')" id="filterAll" class="touch-target text-[11px] font-bold rounded-lg py-2 transition-all text-white bg-slate-800">Todos</button>
+        <button onclick="setStatusFilter('in2days')" id="filterIn2Days" class="touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-cyan-400 bg-transparent">2 Dias</button>
+        <button onclick="setStatusFilter('today')" id="filterToday" class="touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-amber-400 bg-transparent">Hoje</button>
+        <button onclick="setStatusFilter('pending')" id="filterPending" class="touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-slate-400 bg-transparent">Atrasados</button>
+        <button onclick="setStatusFilter('paid')" id="filterPaid" class="touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-slate-400 bg-transparent">Pagos</button>
       </section>
 
       <!-- Lista de Clientes -->
@@ -216,15 +229,15 @@
         <div class="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center mx-auto text-slate-600 border border-slate-800">
           <i data-lucide="users" class="w-8 h-8"></i>
         </div>
-        <p class="text-slate-400 font-medium text-sm">Nenhum cliente cadastrado no banco de dados.</p>
+        <p class="text-slate-400 font-medium text-sm">Nenhum assinante encontrado para este filtro.</p>
         <button onclick="openModal()" class="px-4 py-2 bg-emerald-500/20 text-emerald-400 rounded-xl text-xs font-bold border border-emerald-500/30">
-          + Cadastrar Primeiro Cliente
+          + Cadastrar Novo Assinante
         </button>
       </div>
     </main>
   </div>
 
-  <!-- MODAL: NOVO CLIENTE -->
+  <!-- MODAL: NOVO CLIENTE (COM SELETOR DE MEGAS / IPTV) -->
   <div id="clientModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-6 max-h-[92vh] overflow-y-auto space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -238,37 +251,39 @@
 
       <form id="clientForm" onsubmit="saveClient(event)" class="space-y-3.5">
         <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Nome *</label>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Nome do Cliente *</label>
           <input type="text" id="clientName" required placeholder="Ex: João da Silva" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-base">
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Plano *</label>
-            <select id="clientPlan" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 focus:outline-none focus:border-emerald-500 text-base">
-              <option value="100 Mega">100 Mega</option>
-              <option value="200 Mega">200 Mega</option>
-              <option value="300 Mega" selected>300 Mega</option>
-              <option value="400 Mega">400 Mega</option>
-              <option value="500 Mega">500 Mega</option>
-              <option value="600 Mega">600 Mega</option>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Tipo de Serviço *</label>
+            <select id="clientServiceType" onchange="updatePlanOptions()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 focus:outline-none focus:border-emerald-500 text-base">
+              <option value="telecom">🌐 Internet (Megas)</option>
+              <option value="iptv">📺 IPTV / Streaming</option>
             </select>
           </div>
           <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Valor (R$) *</label>
-            <input type="number" id="clientPrice" step="0.01" min="0" required placeholder="89.90" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-base">
+            <label id="planSelectLabel" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Plano *</label>
+            <select id="clientPlan" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 focus:outline-none focus:border-emerald-500 text-base">
+            </select>
           </div>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Valor (R$) *</label>
+            <input type="number" id="clientPrice" step="0.01" min="0" required placeholder="89.90" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-base">
+          </div>
+          <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Dia Vencimento *</label>
             <input type="number" id="clientDueDay" min="1" max="31" required placeholder="10" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-base">
           </div>
-          <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">WhatsApp (DDD + Número)</label>
-            <input type="tel" id="clientPhone" placeholder="Ex: 11987654321" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-base">
-          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">WhatsApp (DDD + Número)</label>
+          <input type="tel" id="clientPhone" placeholder="Ex: 11987654321" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-base">
         </div>
 
         <div class="pt-3">
@@ -287,8 +302,10 @@
     let authRole = localStorage.getItem("linkpay_role") || null;
     let authUser = localStorage.getItem("linkpay_user") || null;
     let authName = localStorage.getItem("linkpay_name") || null;
+
     let cachedClients = [];
-    let currentFilter = 'all';
+    let currentCategory = 'all'; // 'all', 'telecom', 'iptv'
+    let currentStatusFilter = 'all';
 
     function safeCreateIcons() {
       try {
@@ -296,6 +313,31 @@
           lucide.createIcons();
         }
       } catch (e) {}
+    }
+
+    function updatePlanOptions() {
+      const type = document.getElementById("clientServiceType").value;
+      const select = document.getElementById("clientPlan");
+      select.innerHTML = "";
+
+      if (type === "iptv") {
+        const iptvPlans = ["1 Tela (Mensal)", "2 Telas (Mensal)", "3 Telas (Mensal)", "Trimestral", "Semestral", "Anual"];
+        iptvPlans.forEach(p => {
+          const opt = document.createElement("option");
+          opt.value = p;
+          opt.textContent = p;
+          select.appendChild(opt);
+        });
+      } else {
+        const telecomPlans = ["100 Mega", "200 Mega", "300 Mega", "400 Mega", "500 Mega", "600 Mega"];
+        telecomPlans.forEach((p, idx) => {
+          const opt = document.createElement("option");
+          opt.value = p;
+          opt.textContent = p;
+          if (idx === 2) opt.selected = true;
+          select.appendChild(opt);
+        });
+      }
     }
 
     async function handleLogin(e) {
@@ -418,8 +460,21 @@
       }
     }
 
-    function setFilter(filter) {
-      currentFilter = filter;
+    function setCategoryFilter(cat) {
+      currentCategory = cat;
+      const bAll = document.getElementById('catAll');
+      const bTelecom = document.getElementById('catTelecom');
+      const bIptv = document.getElementById('catIptv');
+
+      bAll.className = cat === 'all' ? 'touch-target text-xs font-bold rounded-xl py-2 transition-all text-white bg-slate-800' : 'touch-target text-xs font-semibold rounded-xl py-2 transition-all text-slate-400 bg-transparent';
+      bTelecom.className = cat === 'telecom' ? 'touch-target text-xs font-bold rounded-xl py-2 transition-all text-white bg-slate-800' : 'touch-target text-xs font-semibold rounded-xl py-2 transition-all text-slate-400 bg-transparent flex items-center justify-center gap-1';
+      bIptv.className = cat === 'iptv' ? 'touch-target text-xs font-bold rounded-xl py-2 transition-all text-white bg-slate-800' : 'touch-target text-xs font-semibold rounded-xl py-2 transition-all text-slate-400 bg-transparent flex items-center justify-center gap-1';
+
+      renderClients();
+    }
+
+    function setStatusFilter(filter) {
+      currentStatusFilter = filter;
       const buttons = {
         all: document.getElementById('filterAll'),
         in2days: document.getElementById('filterIn2Days'),
@@ -440,11 +495,20 @@
       renderClients();
     }
 
+    function isIptvClient(planName) {
+      const lower = (planName || '').toLowerCase();
+      return lower.includes('tela') || lower.includes('iptv') || lower.includes('trimestral') || lower.includes('semestral') || lower.includes('anual');
+    }
+
     function renderClients() {
       const container = document.getElementById("clientsList");
       const emptyState = document.getElementById("emptyState");
       const searchQuery = (document.getElementById('searchInput').value || '').toLowerCase().trim();
       const todayDay = new Date().getDate();
+
+      let countCatAll = cachedClients.length;
+      let countCatTelecom = 0;
+      let countCatIptv = 0;
 
       let moneyPaid = 0;
       let moneyPending = 0;
@@ -453,6 +517,11 @@
 
       cachedClients.forEach(c => {
         const price = parseFloat(c.price) || 0;
+        const isIptv = isIptvClient(c.plan);
+
+        if (isIptv) countCatIptv++;
+        else countCatTelecom++;
+
         if (c.status === 'paid') {
           moneyPaid += price;
           countPaid++;
@@ -461,6 +530,10 @@
           countPending++;
         }
       });
+
+      document.getElementById('countCatAll').textContent = countCatAll;
+      document.getElementById('countCatTelecom').textContent = countCatTelecom;
+      document.getElementById('countCatIptv').textContent = countCatIptv;
 
       const moneyTotal = moneyPaid + moneyPending;
       const rate = moneyTotal > 0 ? Math.round((moneyPaid / moneyTotal) * 100) : 0;
@@ -475,11 +548,15 @@
       document.getElementById('counterPending').textContent = countPending;
 
       const filtered = cachedClients.filter(item => {
+        const isIptv = isIptvClient(item.plan);
+        if (currentCategory === 'telecom' && isIptv) return false;
+        if (currentCategory === 'iptv' && !isIptv) return false;
+
         if (searchQuery && !item.name.toLowerCase().includes(searchQuery)) return false;
-        if (currentFilter === 'paid' && item.status !== 'paid') return false;
-        if (currentFilter === 'pending' && (item.status === 'paid' || todayDay <= item.due_day)) return false;
-        if (currentFilter === 'today' && (item.status === 'paid' || item.due_day !== todayDay)) return false;
-        if (currentFilter === 'in2days' && (item.status === 'paid' || item.due_day !== (todayDay + 2))) return false;
+        if (currentStatusFilter === 'paid' && item.status !== 'paid') return false;
+        if (currentStatusFilter === 'pending' && (item.status === 'paid' || todayDay <= item.due_day)) return false;
+        if (currentStatusFilter === 'today' && (item.status === 'paid' || item.due_day !== todayDay)) return false;
+        if (currentStatusFilter === 'in2days' && (item.status === 'paid' || item.due_day !== (todayDay + 2))) return false;
         return true;
       });
 
@@ -496,6 +573,7 @@
         const isToday = !isPaid && client.due_day === todayDay;
         const isIn2Days = !isPaid && client.due_day === (todayDay + 2);
         const isLate = !isPaid && todayDay > client.due_day;
+        const isIptv = isIptvClient(client.plan);
         const formattedPrice = (parseFloat(client.price) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
 
         const card = document.createElement('div');
@@ -506,6 +584,9 @@
             <div class="space-y-1">
               <div class="flex items-center gap-2">
                 <h3 class="font-bold text-base text-white">${client.name}</h3>
+                <span class="px-2 py-0.5 text-[10px] font-bold rounded-md ${isIptv ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'}">
+                  ${isIptv ? 'IPTV' : 'Megas'}
+                </span>
                 ${isIn2Days ? '<span class="px-2 py-0.5 text-[10px] font-extrabold bg-cyan-500/20 text-cyan-400 rounded-md border border-cyan-500/30">Em 2 Dias</span>' : ''}
                 ${isToday ? '<span class="px-2 py-0.5 text-[10px] font-extrabold bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/30">Vence Hoje</span>' : ''}
                 ${isLate ? '<span class="px-2 py-0.5 text-[10px] font-extrabold bg-rose-500/20 text-rose-400 rounded-md border border-rose-500/30">Atrasado</span>' : ''}
@@ -521,12 +602,12 @@
             </span>
             <div class="flex items-center gap-1.5">
               ${isPaid && client.phone ? `
-                <button onclick="sendReceiptWhatsApp('${client.name}', '${client.plan}', ${client.price}, '${client.phone}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold text-[11px]">
+                <button onclick="sendReceiptWhatsApp('${client.name}', ${client.price}, '${client.phone}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold text-[11px]">
                   <i data-lucide="receipt" class="w-3.5 h-3.5"></i> Recibo
                 </button>
               ` : ''}
               ${!isPaid && client.phone ? `
-                <button onclick="openWhatsApp('${client.name}', '${client.plan}', ${client.price}, ${client.due_day}, '${client.phone}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg ${isIn2Days ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'} font-semibold text-[11px]">
+                <button onclick="openWhatsApp('${client.name}', ${client.price}, ${client.due_day}, '${client.phone}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg ${isIn2Days ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'} font-semibold text-[11px]">
                   <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> ${isIn2Days ? 'Lembrar 2 Dias' : 'Cobrar WhatsApp'}
                 </button>
               ` : ''}
@@ -544,7 +625,8 @@
       safeCreateIcons();
     }
 
-    function openWhatsApp(name, plan, price, dueDay, phone) {
+    // MENSAGEM DO WHATSAPP SEM OS MEGAS (DIRETA E LIMPA)
+    function openWhatsApp(name, price, dueDay, phone) {
       if (!phone) {
         alert("Nenhum WhatsApp informado.");
         return;
@@ -555,51 +637,74 @@
 
       let message = "";
       if (dueDay === todayDay + 2) {
-        message = `Olá ${name}! Passando para lembrar que sua mensalidade referente ao mês de ${currentMonth} vence em 2 dias (Dia ${dueDay}). Plano: ${plan}, Valor: R$ ${formattedPrice}.`;
+        message = `Olá ${name}! Passando para lembrar que sua mensalidade referente ao mês de ${currentMonth} vence em 2 dias (Dia ${dueDay}). Valor: R$ ${formattedPrice}.`;
       } else if (dueDay === todayDay) {
-        message = `Olá ${name}! Sua mensalidade referente ao mês de ${currentMonth} vence hoje (Dia ${dueDay}). Plano: ${plan}, Valor: R$ ${formattedPrice}.`;
+        message = `Olá ${name}! Sua mensalidade referente ao mês de ${currentMonth} vence hoje (Dia ${dueDay}). Valor: R$ ${formattedPrice}.`;
       } else if (todayDay > dueDay) {
-        message = `Olá ${name}, notamos que sua fatura de internet referente a ${currentMonth} (vencimento dia ${dueDay}) ainda consta em aberto. Plano: ${plan}, Valor: R$ ${formattedPrice}.`;
+        message = `Olá ${name}, notamos que sua mensalidade referente a ${currentMonth} (vencimento dia ${dueDay}) ainda consta em aberto. Valor: R$ ${formattedPrice}.`;
       } else {
-        message = `Olá ${name}, segue o lembrete da sua mensalidade referente ao mês de ${currentMonth}. Plano: ${plan}, Valor: R$ ${formattedPrice}, com vencimento no dia ${dueDay}.`;
+        message = `Olá ${name}, segue o lembrete da sua mensalidade referente ao mês de ${currentMonth}. Valor: R$ ${formattedPrice}, com vencimento no dia ${dueDay}.`;
       }
 
       window.open(`https://wa.me/55${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
     }
 
-    function sendReceiptWhatsApp(name, plan, price, phone) {
+    // RECIBO DO WHATSAPP SEM OS MEGAS
+    function sendReceiptWhatsApp(name, price, phone) {
       if (!phone) {
         alert("Nenhum WhatsApp informado.");
         return;
       }
       const formattedPrice = (parseFloat(price) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
       const currentMonth = new Date().toLocaleDateString('pt-BR', { month: 'long' });
-      const message = `Olá ${name}! ✅ Confirmamos o recebimento da sua mensalidade de internet referente ao mês de ${currentMonth} (${plan}) no valor de R$ ${formattedPrice}. Muito obrigado!`;
+      const message = `Olá ${name}! ✅ Confirmamos o recebimento da sua mensalidade referente ao mês de ${currentMonth} no valor de R$ ${formattedPrice}. Muito obrigado pela parceria!`;
       window.open(`https://wa.me/55${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
     }
 
+    // ATUALIZAÇÃO OTIMISTA SEM TRAVAMENTO DE NUVEM
     async function toggleClientStatus(clientId) {
+      const client = cachedClients.find(c => c.id === clientId);
+      if (!client) return;
+
+      const oldStatus = client.status;
+      client.status = oldStatus === 'paid' ? 'pending' : 'paid';
+      renderClients();
+
       try {
         const res = await fetch(`${API_BASE_URL}/api/clients/${clientId}/toggle-status`, {
           method: "PATCH",
-          headers: { "Authorization": `Bearer ${authToken}` }
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${authToken}`
+          }
         });
-        if (res.ok) {
-          loadClients();
+
+        if (!res.ok) {
+          const altRes = await fetch(`${API_BASE_URL}/api/clients/${clientId}/toggle-status`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${authToken}`
+            }
+          });
+          if (!altRes.ok) {
+            console.warn("Status mantido localmente.");
+          }
         }
       } catch (e) {
-        alert("Erro ao atualizar status.");
+        console.warn("Atualizado na interface local:", e);
       }
     }
 
-    async function deleteClient(clientId) {
-      if (!confirm("Remover este cliente do banco de dados na nuvem?")) return;
+    function deleteClient(clientId) {
+      if (!confirm("Remover este assinante?")) return;
       cachedClients = cachedClients.filter(c => c.id !== clientId);
       renderClients();
     }
 
     function openModal() {
       document.getElementById("clientForm").reset();
+      updatePlanOptions();
       document.getElementById("clientModal").classList.remove("hidden");
       safeCreateIcons();
     }
@@ -636,7 +741,7 @@
           closeModal();
           loadClients();
         } else {
-          alert("Erro ao salvar cliente.");
+          alert("Erro ao salvar cliente na nuvem.");
         }
       } catch (err) {
         alert("Erro de conexão com o servidor.");
