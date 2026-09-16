@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>LinkPay Pro - Gestão & Cobrança</title>
 
-  <!-- Configurações Mobile -->
+  <!-- Configurações Mobile e PWA -->
   <meta name="theme-color" content="#0f172a">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -39,16 +40,23 @@
   </script>
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
     input, select, button {
       -webkit-tap-highlight-color: transparent;
     }
     .touch-target {
       min-height: 48px;
     }
+    /* Fallback para fontes e renderização legada */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
   </style>
 </head>
 
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-emerald-500 selection:text-white">
+<body class="bg-slate-950 text-slate-100 min-h-screen antialiased selection:bg-emerald-500 selection:text-white">
 
   <!-- 1. TELA DE LOGIN -->
   <div id="loginScreen" class="fixed inset-0 z-50 bg-slate-950 flex items-center justify-center p-4">
@@ -108,7 +116,7 @@
     </div>
   </div>
 
-  <!-- 2. PAINEL DO ADMINISTRADOR MASTER (VOCÊ) -->
+  <!-- 2. PAINEL MASTER -->
   <div id="masterContainer" class="hidden pb-24">
     <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3">
       <div class="max-w-md mx-auto flex items-center justify-between gap-2">
@@ -170,7 +178,7 @@
     </main>
   </div>
 
-  <!-- 3. PAINEL DO PROVEDOR (OPERACIONAL) -->
+  <!-- 3. PAINEL DO PROVEDOR -->
   <div id="appContainer" class="hidden pb-24">
     <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3">
       <div class="max-w-md mx-auto flex items-center justify-between gap-2">
@@ -509,7 +517,7 @@
     </div>
   </div>
 
-  <!-- MODAL DO PROVEDOR: CADASTRO DE CLIENTE (ADAPTÁVEL TELECOM / IPTV) -->
+  <!-- MODAL DO PROVEDOR: CADASTRO DE CLIENTE -->
   <div id="clientModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-6 max-h-[92vh] overflow-y-auto space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -532,7 +540,6 @@
           <div>
             <label id="planSelectLabel" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Plano *</label>
             <select id="clientPlan" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 focus:outline-none focus:border-emerald-500 text-base">
-              <!-- Opções dinâmicas injetadas de acordo com o tipo de usuário -->
             </select>
           </div>
           <div>
@@ -573,7 +580,7 @@
     // =========================================================================
     // ⭐️ LISTA GLOBAL DE CONTAS LIBERADAS (GARANTIDA EM QUALQUER CELULAR)
     // =========================================================================
-    const GLOBAL_LICENSED_TENANTS = [
+    var GLOBAL_LICENSED_TENANTS = [
       {
         id: 'prov_demo',
         name: 'Provedor Demonstração (Telecom)',
@@ -649,35 +656,45 @@
     ];
 
     // Limpeza de service workers antigos
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(regs => {
-        for (let r of regs) r.unregister();
-      }).catch(() => {});
-    }
-    if ('caches' in window) {
-      caches.keys().then(names => {
-        for (let n of names) caches.delete(n);
-      }).catch(() => {});
-    }
+    try {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          for (var i = 0; i < regs.length; i++) {
+            regs[i].unregister();
+          }
+        })['catch'](function() {});
+      }
+      if ('caches' in window) {
+        caches.keys().then(function(names) {
+          for (var i = 0; i < names.length; i++) {
+            caches['delete'](names[i]);
+          }
+        })['catch'](function() {});
+      }
+    } catch(e) {}
 
-    const MASTER_SUPPORT_PHONE = "5511999999999"; 
+    var MASTER_SUPPORT_PHONE = "5511999999999"; 
 
-    const MASTER_CONFIG = {
+    var MASTER_CONFIG = {
       username: "master",
       password: "master@2026"
     };
 
-    const MASTER_STORAGE_KEY = 'linkpay_master_tenants';
-    const MASTER_PIX_KEY = 'linkpay_master_pix_cfg';
+    var MASTER_STORAGE_KEY = 'linkpay_master_tenants';
+    var MASTER_PIX_KEY = 'linkpay_master_pix_cfg';
 
-    let currentUser = localStorage.getItem('linkpay_logged_user') || null;
-    let currentRole = localStorage.getItem('linkpay_logged_role') || null;
-    let currentFilter = 'all';
+    var currentUser = null;
+    var currentRole = null;
+    var currentFilter = 'all';
 
-    if (currentUser && !currentRole) {
-      currentRole = (currentUser.toLowerCase() === 'master') ? 'master' : 'tenant';
-      localStorage.setItem('linkpay_logged_role', currentRole);
-    }
+    try {
+      currentUser = localStorage.getItem('linkpay_logged_user') || null;
+      currentRole = localStorage.getItem('linkpay_logged_role') || null;
+      if (currentUser && !currentRole) {
+        currentRole = (currentUser.toLowerCase() === 'master') ? 'master' : 'tenant';
+        localStorage.setItem('linkpay_logged_role', currentRole);
+      }
+    } catch (e) {}
 
     function safeCreateIcons() {
       try {
@@ -689,103 +706,141 @@
 
     function forceCleanReset() {
       if (confirm("Deseja limpar os dados de sessão e cache deste aparelho?")) {
-        localStorage.removeItem('linkpay_logged_user');
-        localStorage.removeItem('linkpay_logged_role');
-        localStorage.removeItem(MASTER_STORAGE_KEY);
-        sessionStorage.clear();
+        try {
+          localStorage.removeItem('linkpay_logged_user');
+          localStorage.removeItem('linkpay_logged_role');
+          localStorage.removeItem(MASTER_STORAGE_KEY);
+          sessionStorage.clear();
+        } catch(e) {}
         window.location.reload(true);
       }
     }
 
-    // SINCRONIZAÇÃO FORÇADA: Sempre mescla as contas do código, nunca ignora novas contas!
+    // SINCRONIZAÇÃO TOTAL: Funciona em qualquer aparelho antigo ou novo
     function getMasterTenants() {
-      let localData = [];
+      var localData = [];
       try {
-        const stored = localStorage.getItem(MASTER_STORAGE_KEY);
+        var stored = localStorage.getItem(MASTER_STORAGE_KEY);
         if (stored) localData = JSON.parse(stored);
       } catch (e) {}
 
-      const mergedMap = new Map();
-      GLOBAL_LICENSED_TENANTS.forEach(t => mergedMap.set(t.user.toLowerCase().trim(), t));
+      var mergedMap = {};
+      var i;
 
-      if (Array.isArray(localData)) {
-        localData.forEach(t => {
-          if (t && t.user) {
-            const key = t.user.toLowerCase().trim();
-            if (mergedMap.has(key)) {
-              mergedMap.set(key, { ...mergedMap.get(key), ...t });
-            } else {
-              mergedMap.set(key, t);
-            }
-          }
-        });
+      for (i = 0; i < GLOBAL_LICENSED_TENANTS.length; i++) {
+        var item = GLOBAL_LICENSED_TENANTS[i];
+        mergedMap[item.user.toLowerCase().trim()] = item;
       }
 
-      const mergedList = Array.from(mergedMap.values());
-      localStorage.setItem(MASTER_STORAGE_KEY, JSON.stringify(mergedList));
+      if (Array.isArray(localData)) {
+        for (i = 0; i < localData.length; i++) {
+          var t = localData[i];
+          if (t && t.user) {
+            var key = t.user.toLowerCase().trim();
+            if (mergedMap[key]) {
+              var base = mergedMap[key];
+              for (var prop in t) {
+                if (t.hasOwnProperty(prop)) {
+                  base[prop] = t[prop];
+                }
+              }
+            } else {
+              mergedMap[key] = t;
+            }
+          }
+        }
+      }
+
+      var mergedList = [];
+      for (var k in mergedMap) {
+        if (mergedMap.hasOwnProperty(k)) {
+          mergedList.push(mergedMap[k]);
+        }
+      }
+
+      try {
+        localStorage.setItem(MASTER_STORAGE_KEY, JSON.stringify(mergedList));
+      } catch(e) {}
+
       return mergedList;
     }
 
     function getCurrentTenantConfig() {
       if (currentRole !== 'tenant' || !currentUser) return null;
-      const tenants = getMasterTenants();
-      return tenants.find(t => t.user.toLowerCase() === currentUser.toLowerCase()) || { type: 'telecom' };
+      var tenants = getMasterTenants();
+      for (var i = 0; i < tenants.length; i++) {
+        if (tenants[i].user.toLowerCase() === currentUser.toLowerCase()) {
+          return tenants[i];
+        }
+      }
+      return { type: 'telecom' };
     }
 
     function saveMasterTenants(tenants) {
-      localStorage.setItem(MASTER_STORAGE_KEY, JSON.stringify(tenants));
+      try {
+        localStorage.setItem(MASTER_STORAGE_KEY, JSON.stringify(tenants));
+      } catch(e) {}
     }
 
     function getStorageKey() {
-      return `linkpay_clients_db_${currentUser || 'default'}`;
+      return 'linkpay_clients_db_' + (currentUser || 'default');
     }
 
     function getPixConfigKey() {
-      return `linkpay_pix_cfg_${currentUser || 'default'}`;
+      return 'linkpay_pix_cfg_' + (currentUser || 'default');
     }
 
     function recoverPasswordSupport() {
-      const userInput = (document.getElementById('loginUser').value || '').trim();
-      let msg = "Olá suporte do LinkPay Pro! Esqueci minha senha de acesso.";
+      var userInput = (document.getElementById('loginUser').value || '').trim();
+      var msg = "Olá suporte do LinkPay Pro! Esqueci minha senha de acesso.";
       if (userInput) {
-        msg += ` Meu usuário cadastrado é: *${userInput}*.`;
+        msg += " Meu usuário cadastrado é: *" + userInput + "*.";
       }
       msg += " Pode me ajudar a redefinir meu acesso?";
-      window.open(`https://wa.me/${MASTER_SUPPORT_PHONE}?text=${encodeURIComponent(msg)}`, '_blank');
+      window.open("https://wa.me/" + MASTER_SUPPORT_PHONE + "?text=" + encodeURIComponent(msg), '_blank');
     }
 
     function checkAutoMonthlyReset() {
       if (!currentUser || currentRole !== 'tenant') return;
 
-      const currentCycle = getCurrentCycleKey();
-      const lastCycle = localStorage.getItem(`linkpay_last_cycle_${currentUser}`);
+      var currentCycle = getCurrentCycleKey();
+      var lastCycle = null;
+      try {
+        lastCycle = localStorage.getItem('linkpay_last_cycle_' + currentUser);
+      } catch(e) {}
 
       if (lastCycle && lastCycle !== currentCycle) {
-        let clients = getStoredClients();
-        clients = clients.map(c => ({
-          ...c,
-          status: 'pending'
-        }));
+        var clients = getStoredClients();
+        for (var i = 0; i < clients.length; i++) {
+          clients[i].status = 'pending';
+        }
         saveStoredClients(clients);
       }
 
-      localStorage.setItem(`linkpay_last_cycle_${currentUser}`, currentCycle);
+      try {
+        localStorage.setItem('linkpay_last_cycle_' + currentUser, currentCycle);
+      } catch(e) {}
     }
 
-    function resetMonthlyCycle(manual = false) {
-      const cycleName = getCurrentCycleName();
-      if (!manual || confirm(`Iniciar cobranças de ${cycleName}? Todos os clientes voltarão para status pendente neste mês.`)) {
-        const clients = getStoredClients().map(c => ({ ...c, status: 'pending' }));
+    function resetMonthlyCycle(manual) {
+      var cycleName = getCurrentCycleName();
+      if (!manual || confirm("Iniciar cobranças de " + cycleName + "? Todos os clientes voltarão para status pendente neste mês.")) {
+        var clients = getStoredClients();
+        for (var i = 0; i < clients.length; i++) {
+          clients[i].status = 'pending';
+        }
         saveStoredClients(clients);
-        localStorage.setItem(`linkpay_last_cycle_${currentUser}`, getCurrentCycleKey());
+        try {
+          localStorage.setItem('linkpay_last_cycle_' + currentUser, getCurrentCycleKey());
+        } catch(e) {}
         renderClients();
       }
     }
 
     function checkAuth() {
-      const loginScreen = document.getElementById('loginScreen');
-      const masterContainer = document.getElementById('masterContainer');
-      const appContainer = document.getElementById('appContainer');
+      var loginScreen = document.getElementById('loginScreen');
+      var masterContainer = document.getElementById('masterContainer');
+      var appContainer = document.getElementById('appContainer');
 
       loginScreen.classList.add('hidden');
       masterContainer.classList.add('hidden');
@@ -806,8 +861,8 @@
     }
 
     function setupTenantInterface() {
-      const tenant = getCurrentTenantConfig();
-      const iconEl = document.getElementById('userCategoryIcon');
+      var tenant = getCurrentTenantConfig();
+      var iconEl = document.getElementById('userCategoryIcon');
       if (tenant && tenant.type === 'iptv') {
         if (iconEl) iconEl.innerHTML = '<i data-lucide="tv" class="w-6 h-6"></i>';
       } else {
@@ -817,25 +872,33 @@
     }
 
     function handleLogin(e) {
-      if (e) e.preventDefault();
-      const user = (document.getElementById('loginUser').value || '').trim().toLowerCase();
-      const pass = (document.getElementById('loginPass').value || '').trim();
-      const errorEl = document.getElementById('loginError');
+      if (e && e.preventDefault) e.preventDefault();
+      var user = (document.getElementById('loginUser').value || '').trim().toLowerCase();
+      var pass = (document.getElementById('loginPass').value || '').trim();
+      var errorEl = document.getElementById('loginError');
       errorEl.classList.add('hidden');
 
       // 1. Verificação Master
       if (user === MASTER_CONFIG.username.toLowerCase() && pass === MASTER_CONFIG.password) {
         currentUser = "master";
         currentRole = "master";
-        localStorage.setItem('linkpay_logged_user', "master");
-        localStorage.setItem('linkpay_logged_role', "master");
+        try {
+          localStorage.setItem('linkpay_logged_user', "master");
+          localStorage.setItem('linkpay_logged_role', "master");
+        } catch(err) {}
         checkAuth();
         return;
       }
 
       // 2. Verificação Provedor (Tenants)
-      const tenants = getMasterTenants();
-      const tenant = tenants.find(t => t.user.toLowerCase().trim() === user && t.pass === pass);
+      var tenants = getMasterTenants();
+      var tenant = null;
+      for (var i = 0; i < tenants.length; i++) {
+        if (tenants[i].user.toLowerCase().trim() === user && tenants[i].pass === pass) {
+          tenant = tenants[i];
+          break;
+        }
+      }
 
       if (tenant) {
         if (tenant.status === 'blocked') {
@@ -845,8 +908,10 @@
         }
         currentUser = tenant.user;
         currentRole = "tenant";
-        localStorage.setItem('linkpay_logged_user', tenant.user);
-        localStorage.setItem('linkpay_logged_role', "tenant");
+        try {
+          localStorage.setItem('linkpay_logged_user', tenant.user);
+          localStorage.setItem('linkpay_logged_role', "tenant");
+        } catch(err) {}
         checkAuth();
       } else {
         errorEl.textContent = "Usuário ou senha incorretos.";
@@ -856,8 +921,10 @@
 
     function handleLogout() {
       if (confirm("Deseja encerrar a sessão?")) {
-        localStorage.removeItem('linkpay_logged_user');
-        localStorage.removeItem('linkpay_logged_role');
+        try {
+          localStorage.removeItem('linkpay_logged_user');
+          localStorage.removeItem('linkpay_logged_role');
+        } catch(e) {}
         currentUser = null;
         currentRole = null;
         checkAuth();
@@ -865,7 +932,10 @@
     }
 
     function openMasterPixModal() {
-      const cfg = JSON.parse(localStorage.getItem(MASTER_PIX_KEY) || '{}');
+      var cfg = {};
+      try {
+        cfg = JSON.parse(localStorage.getItem(MASTER_PIX_KEY) || '{}');
+      } catch(e) {}
       document.getElementById('masterPixKey').value = cfg.key || '';
       document.getElementById('masterPixHolder').value = cfg.holder || '';
       document.getElementById('masterPixModal').classList.remove('hidden');
@@ -877,18 +947,23 @@
     }
 
     function saveMasterPixConfig() {
-      const cfg = {
+      var cfg = {
         key: document.getElementById('masterPixKey').value.trim(),
         holder: document.getElementById('masterPixHolder').value.trim()
       };
-      localStorage.setItem(MASTER_PIX_KEY, JSON.stringify(cfg));
+      try {
+        localStorage.setItem(MASTER_PIX_KEY, JSON.stringify(cfg));
+      } catch(e) {}
       alert("Seu PIX Master foi salvo com sucesso!");
       closeMasterPixModal();
       renderMasterPanel();
     }
 
     function openConfigModal() {
-      const cfg = JSON.parse(localStorage.getItem(getPixConfigKey()) || '{}');
+      var cfg = {};
+      try {
+        cfg = JSON.parse(localStorage.getItem(getPixConfigKey()) || '{}');
+      } catch(e) {}
       document.getElementById('cfgPixKey').value = cfg.key || '';
       document.getElementById('cfgPixHolder').value = cfg.holder || '';
       document.getElementById('cfgNewPassword').value = '';
@@ -901,41 +976,48 @@
     }
 
     function savePixConfig() {
-      const cfg = {
+      var cfg = {
         key: document.getElementById('cfgPixKey').value.trim(),
         holder: document.getElementById('cfgPixHolder').value.trim()
       };
-      localStorage.setItem(getPixConfigKey(), JSON.stringify(cfg));
+      try {
+        localStorage.setItem(getPixConfigKey(), JSON.stringify(cfg));
+      } catch(e) {}
       alert("Chave PIX salva!");
       closeConfigModal();
     }
 
     function changeTenantOwnPassword() {
-      const newPass = document.getElementById('cfgNewPassword').value.trim();
+      var newPass = document.getElementById('cfgNewPassword').value.trim();
       if (!newPass || newPass.length < 4) {
         alert("A senha deve ter no mínimo 4 dígitos.");
         return;
       }
 
-      let tenants = getMasterTenants();
-      const t = tenants.find(item => item.user.toLowerCase() === currentUser.toLowerCase());
-      if (t) {
-        t.pass = newPass;
-        saveMasterTenants(tenants);
-        alert("Senha atualizada com sucesso!");
-        closeConfigModal();
+      var tenants = getMasterTenants();
+      for (var i = 0; i < tenants.length; i++) {
+        if (tenants[i].user.toLowerCase() === currentUser.toLowerCase()) {
+          tenants[i].pass = newPass;
+          saveMasterTenants(tenants);
+          alert("Senha atualizada com sucesso!");
+          closeConfigModal();
+          return;
+        }
       }
     }
 
     function openMasterEditModal(id) {
-      const tenants = getMasterTenants();
-      const t = tenants.find(item => item.id === id);
-      if (t) {
-        document.getElementById('editTenantId').value = t.id;
-        document.getElementById('editTenantName').textContent = `${t.name} (@${t.user})`;
-        document.getElementById('editTenantPass').value = t.pass;
-        document.getElementById('masterEditModal').classList.remove('hidden');
-        safeCreateIcons();
+      var tenants = getMasterTenants();
+      for (var i = 0; i < tenants.length; i++) {
+        if (tenants[i].id === id) {
+          var t = tenants[i];
+          document.getElementById('editTenantId').value = t.id;
+          document.getElementById('editTenantName').textContent = t.name + ' (@' + t.user + ')';
+          document.getElementById('editTenantPass').value = t.pass;
+          document.getElementById('masterEditModal').classList.remove('hidden');
+          safeCreateIcons();
+          return;
+        }
       }
     }
 
@@ -944,57 +1026,65 @@
     }
 
     function saveTenantNewPass() {
-      const id = document.getElementById('editTenantId').value;
-      const newPass = document.getElementById('editTenantPass').value.trim();
+      var id = document.getElementById('editTenantId').value;
+      var newPass = document.getElementById('editTenantPass').value.trim();
 
       if (!newPass) {
         alert("A senha não pode ser vazia.");
         return;
       }
 
-      let tenants = getMasterTenants();
-      const t = tenants.find(item => item.id === id);
-      if (t) {
-        t.pass = newPass;
-        saveMasterTenants(tenants);
-        alert(`Senha do provedor ${t.name} alterada!`);
-        closeMasterEditModal();
-        renderMasterPanel();
+      var tenants = getMasterTenants();
+      for (var i = 0; i < tenants.length; i++) {
+        if (tenants[i].id === id) {
+          tenants[i].pass = newPass;
+          saveMasterTenants(tenants);
+          alert("Senha do provedor " + tenants[i].name + " alterada!");
+          closeMasterEditModal();
+          renderMasterPanel();
+          return;
+        }
       }
     }
 
     function exportBackupData() {
-      const clients = getStoredClients();
-      const cfg = localStorage.getItem(getPixConfigKey()) || '{}';
-      const backupObject = {
+      var clients = getStoredClients();
+      var cfg = {};
+      try {
+        cfg = JSON.parse(localStorage.getItem(getPixConfigKey()) || '{}');
+      } catch(e) {}
+
+      var backupObject = {
         exportedAt: new Date().toISOString(),
         user: currentUser,
-        config: JSON.parse(cfg),
+        config: cfg,
         clients: clients
       };
 
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupObject, null, 2));
-      const downloadAnchor = document.createElement('a');
+      var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupObject, null, 2));
+      var downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `linkpay_backup_${currentUser}_${new Date().toISOString().slice(0, 10)}.json`);
+      downloadAnchor.setAttribute("download", "linkpay_backup_" + currentUser + "_" + new Date().toISOString().slice(0, 10) + ".json");
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
     }
 
     function importBackupData(e) {
-      const file = e.target.files[0];
+      var file = e.target.files[0];
       if (!file) return;
 
-      const reader = new FileReader();
+      var reader = new FileReader();
       reader.onload = function(evt) {
         try {
-          const imported = JSON.parse(evt.target.result);
+          var imported = JSON.parse(evt.target.result);
           if (Array.isArray(imported.clients)) {
-            if (confirm(`Restaurar backup com ${imported.clients.length} clientes?`)) {
+            if (confirm("Restaurar backup com " + imported.clients.length + " clientes?")) {
               saveStoredClients(imported.clients);
               if (imported.config) {
-                localStorage.setItem(getPixConfigKey(), JSON.stringify(imported.config));
+                try {
+                  localStorage.setItem(getPixConfigKey(), JSON.stringify(imported.config));
+                } catch(err) {}
               }
               alert("Backup importado com sucesso!");
               closeConfigModal();
@@ -1022,15 +1112,17 @@
 
     function saveProvider(e) {
       e.preventDefault();
-      const tenants = getMasterTenants();
-      const user = document.getElementById('provUser').value.trim().toLowerCase();
+      var tenants = getMasterTenants();
+      var user = document.getElementById('provUser').value.trim().toLowerCase();
 
-      if (tenants.some(t => t.user.toLowerCase() === user) || user === 'master') {
-        alert("Este usuário já está em uso.");
-        return;
+      for (var i = 0; i < tenants.length; i++) {
+        if (tenants[i].user.toLowerCase() === user || user === 'master') {
+          alert("Este usuário já está em uso.");
+          return;
+        }
       }
 
-      const newTenant = {
+      var newTenant = {
         id: 'prov_' + Date.now(),
         name: document.getElementById('provCompany').value.trim(),
         user: user,
@@ -1050,128 +1142,156 @@
     }
 
     function toggleProviderStatus(id) {
-      const tenants = getMasterTenants();
-      const t = tenants.find(item => item.id === id);
-      if (t) {
-        t.status = t.status === 'active' ? 'blocked' : 'active';
-        saveMasterTenants(tenants);
-        renderMasterPanel();
+      var tenants = getMasterTenants();
+      for (var i = 0; i < tenants.length; i++) {
+        if (tenants[i].id === id) {
+          tenants[i].status = tenants[i].status === 'active' ? 'blocked' : 'active';
+          saveMasterTenants(tenants);
+          renderMasterPanel();
+          return;
+        }
       }
     }
 
     function toggleProviderPaid(id) {
-      const tenants = getMasterTenants();
-      const t = tenants.find(item => item.id === id);
-      if (t) {
-        t.paidStatus = t.paidStatus === 'paid' ? 'pending' : 'paid';
-        saveMasterTenants(tenants);
-        renderMasterPanel();
+      var tenants = getMasterTenants();
+      for (var i = 0; i < tenants.length; i++) {
+        if (tenants[i].id === id) {
+          tenants[i].paidStatus = tenants[i].paidStatus === 'paid' ? 'pending' : 'paid';
+          saveMasterTenants(tenants);
+          renderMasterPanel();
+          return;
+        }
       }
     }
 
     function chargeProviderWhatsApp(name, fee, dueDay, phone) {
-      const formattedFee = fee.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      const currentMonth = new Date().toLocaleDateString('pt-BR', { month: 'long' });
-      const masterPix = JSON.parse(localStorage.getItem(MASTER_PIX_KEY) || '{}');
+      var formattedFee = fee.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      var currentMonth = new Date().toLocaleDateString('pt-BR', { month: 'long' });
+      var masterPix = {};
+      try {
+        masterPix = JSON.parse(localStorage.getItem(MASTER_PIX_KEY) || '{}');
+      } catch(e) {}
 
-      let message = `Olá ${name}, segue o lembrete da mensalidade do seu sistema LinkPay Pro referente ao mês de ${currentMonth}. Valor da licença: R$ ${formattedFee}, com vencimento no dia ${dueDay}.`;
+      var message = "Olá " + name + ", segue o lembrete da mensalidade do seu sistema LinkPay Pro referente ao mês de " + currentMonth + ". Valor da licença: R$ " + formattedFee + ", com vencimento no dia " + dueDay + ".";
 
       if (masterPix.key) {
-        message += `\n\n📌 Pagamento via PIX:\nChave: ${masterPix.key}`;
-        if (masterPix.holder) message += `\nTitular: ${masterPix.holder}`;
+        message += "\n\n📌 Pagamento via PIX:\nChave: " + masterPix.key;
+        if (masterPix.holder) message += "\nTitular: " + masterPix.holder;
       }
 
-      window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(message)}`, '_blank');
+      window.open("https://wa.me/" + phone + "?text=" + encodeURIComponent(message), '_blank');
     }
 
     function deleteProvider(id) {
       if (confirm("Remover este provedor do sistema?")) {
-        let tenants = getMasterTenants();
-        tenants = tenants.filter(t => t.id !== id);
-        saveMasterTenants(tenants);
+        var tenants = getMasterTenants();
+        var updated = [];
+        for (var i = 0; i < tenants.length; i++) {
+          if (tenants[i].id !== id) {
+            updated.push(tenants[i]);
+          }
+        }
+        saveMasterTenants(updated);
         renderMasterPanel();
       }
     }
 
     function renderMasterPanel() {
-      const tenants = getMasterTenants();
-      const activeTenants = tenants.filter(t => t.status === 'active');
-      
-      const paidRevenue = activeTenants.filter(t => t.paidStatus === 'paid').reduce((acc, t) => acc + t.fee, 0);
-      const pendingRevenue = activeTenants.filter(t => t.paidStatus !== 'paid').reduce((acc, t) => acc + t.fee, 0);
-      const totalPotential = activeTenants.reduce((acc, t) => acc + t.fee, 0);
+      var tenants = getMasterTenants();
+      var activeTenants = [];
+      var paidRevenue = 0;
+      var pendingRevenue = 0;
+      var totalPotential = 0;
+
+      for (var i = 0; i < tenants.length; i++) {
+        var t = tenants[i];
+        if (t.status === 'active') {
+          activeTenants.push(t);
+          totalPotential += t.fee;
+          if (t.paidStatus === 'paid') {
+            paidRevenue += t.fee;
+          } else {
+            pendingRevenue += t.fee;
+          }
+        }
+      }
 
       document.getElementById('masterTotalTenants').textContent = activeTenants.length;
       document.getElementById('masterPaidRevenue').textContent = paidRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
       document.getElementById('masterPendingRevenue').textContent = pendingRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
       document.getElementById('masterMonthlyTotal').textContent = totalPotential.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-      const masterPix = JSON.parse(localStorage.getItem(MASTER_PIX_KEY) || '{}');
-      const pixAlert = document.getElementById('masterPixAlert');
+      var masterPix = {};
+      try {
+        masterPix = JSON.parse(localStorage.getItem(MASTER_PIX_KEY) || '{}');
+      } catch(e) {}
+      
+      var pixAlert = document.getElementById('masterPixAlert');
       if (!masterPix.key) {
         pixAlert.classList.remove('hidden');
       } else {
         pixAlert.classList.add('hidden');
       }
 
-      const container = document.getElementById('masterTenantsList');
+      var container = document.getElementById('masterTenantsList');
       container.innerHTML = '';
 
-      tenants.forEach(t => {
-        const isPaid = t.paidStatus === 'paid';
-        const isBlocked = t.status === 'blocked';
-        const formattedFee = t.fee.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        const typeBadge = t.type === 'iptv' ? '<span class="px-2 py-0.5 text-[10px] font-bold bg-purple-500/20 text-purple-400 rounded-md border border-purple-500/30">IPTV</span>' : '<span class="px-2 py-0.5 text-[10px] font-bold bg-blue-500/20 text-blue-400 rounded-md border border-blue-500/30">Telecom</span>';
+      for (var j = 0; j < tenants.length; j++) {
+        var item = tenants[j];
+        var isPaid = item.paidStatus === 'paid';
+        var isBlocked = item.status === 'blocked';
+        var formattedFee = item.fee.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        var typeBadge = item.type === 'iptv' ? '<span class="px-2 py-0.5 text-[10px] font-bold bg-purple-500/20 text-purple-400 rounded-md border border-purple-500/30">IPTV</span>' : '<span class="px-2 py-0.5 text-[10px] font-bold bg-blue-500/20 text-blue-400 rounded-md border border-blue-500/30">Telecom</span>';
 
-        const card = document.createElement('div');
-        card.className = `bg-slate-900 border ${isBlocked ? 'border-rose-900/50 opacity-60' : isPaid ? 'border-emerald-500/30' : 'border-slate-800'} rounded-2xl p-4 space-y-3`;
+        var card = document.createElement('div');
+        card.className = 'bg-slate-900 border ' + (isBlocked ? 'border-rose-900/50 opacity-60' : isPaid ? 'border-emerald-500/30' : 'border-slate-800') + ' rounded-2xl p-4 space-y-3';
 
-        card.innerHTML = `
-          <div class="flex items-start justify-between gap-2">
-            <div>
-              <div class="flex items-center gap-2">
-                <h3 class="font-bold text-base text-white">${t.name}</h3>
-                ${typeBadge}
-                ${isBlocked ? '<span class="px-2 py-0.5 text-[10px] font-bold bg-rose-500/20 text-rose-400 rounded-md">Bloqueado</span>' : '<span class="px-2 py-0.5 text-[10px] font-bold bg-emerald-500/20 text-emerald-400 rounded-md">Ativo</span>'}
-              </div>
-              <p class="text-xs text-slate-400 font-mono mt-0.5">Usuário: <strong class="text-slate-200">${t.user}</strong> • Senha: <span class="text-amber-400 font-semibold">${t.pass}</span></p>
-            </div>
-            <div class="flex items-center gap-1">
-              <button onclick="openMasterEditModal('${t.id}')" class="text-slate-400 hover:text-amber-400 p-1" title="Redefinir Senha">
-                <i data-lucide="key" class="w-4 h-4"></i>
-              </button>
-              <button onclick="deleteProvider('${t.id}')" class="text-slate-500 hover:text-rose-400 p-1" title="Excluir">
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
-              </button>
-            </div>
-          </div>
+        card.innerHTML = 
+          '<div class="flex items-start justify-between gap-2">' +
+            '<div>' +
+              '<div class="flex items-center gap-2">' +
+                '<h3 class="font-bold text-base text-white">' + item.name + '</h3>' +
+                typeBadge +
+                (isBlocked ? '<span class="px-2 py-0.5 text-[10px] font-bold bg-rose-500/20 text-rose-400 rounded-md">Bloqueado</span>' : '<span class="px-2 py-0.5 text-[10px] font-bold bg-emerald-500/20 text-emerald-400 rounded-md">Ativo</span>') +
+              '</div>' +
+              '<p class="text-xs text-slate-400 font-mono mt-0.5">Usuário: <strong class="text-slate-200">' + item.user + '</strong> • Senha: <span class="text-amber-400 font-semibold">' + item.pass + '</span></p>' +
+            '</div>' +
+            '<div class="flex items-center gap-1">' +
+              '<button onclick="openMasterEditModal(\'' + item.id + '\')" class="text-slate-400 hover:text-amber-400 p-1" title="Redefinir Senha">' +
+                '<i data-lucide="key" class="w-4 h-4"></i>' +
+              '</button>' +
+              '<button onclick="deleteProvider(\'' + item.id + '\')" class="text-slate-500 hover:text-rose-400 p-1" title="Excluir">' +
+                '<i data-lucide="trash-2" class="w-4 h-4"></i>' +
+              '</button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="flex items-center justify-between border-t border-slate-800/80 pt-2.5 text-xs">' +
+            '<span class="text-slate-400">Mensalidade: <strong class="text-white">R$ ' + formattedFee + '</strong> (Dia ' + item.dueDay + ')</span>' +
+            '<button onclick="chargeProviderWhatsApp(\'' + item.name + '\', ' + item.fee + ', ' + item.dueDay + ', \'' + item.phone + '\')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-semibold">' +
+              '<i data-lucide="message-circle" class="w-3.5 h-3.5"></i> Cobrar Licença' +
+            '</button>' +
+          '</div>' +
+          '<div class="grid grid-cols-2 gap-2 pt-1">' +
+            '<button onclick="toggleProviderPaid(\'' + item.id + '\')" class="touch-target rounded-xl font-bold text-xs uppercase flex items-center justify-center gap-1.5 ' + (isPaid ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white') + '">' +
+              '<i data-lucide="' + (isPaid ? 'check' : 'alert-circle') + '" class="w-4 h-4"></i>' +
+              (isPaid ? 'Licença Paga' : 'Licença Pendente') +
+            '</button>' +
+            '<button onclick="toggleProviderStatus(\'' + item.id + '\')" class="touch-target rounded-xl font-bold text-xs uppercase flex items-center justify-center gap-1.5 ' + (isBlocked ? 'bg-slate-700 text-emerald-400' : 'bg-slate-800 text-rose-400 border border-slate-700') + '">' +
+              '<i data-lucide="' + (isBlocked ? 'unlock' : 'lock') + '" class="w-4 h-4"></i>' +
+              (isBlocked ? 'Desbloquear' : 'Bloquear Acesso') +
+            '</button>' +
+          '</div>';
 
-          <div class="flex items-center justify-between border-t border-slate-800/80 pt-2.5 text-xs">
-            <span class="text-slate-400">Mensalidade: <strong class="text-white">R$ ${formattedFee}</strong> (Dia ${t.dueDay})</span>
-            <button onclick="chargeProviderWhatsApp('${t.name}', ${t.fee}, ${t.dueDay}, '${t.phone}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-semibold">
-              <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> Cobrar Licença
-            </button>
-          </div>
-
-          <div class="grid grid-cols-2 gap-2 pt-1">
-            <button onclick="toggleProviderPaid('${t.id}')" class="touch-target rounded-xl font-bold text-xs uppercase flex items-center justify-center gap-1.5 ${isPaid ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}">
-              <i data-lucide="${isPaid ? 'check' : 'alert-circle'}" class="w-4 h-4"></i>
-              ${isPaid ? 'Licença Paga' : 'Licença Pendente'}
-            </button>
-            <button onclick="toggleProviderStatus('${t.id}')" class="touch-target rounded-xl font-bold text-xs uppercase flex items-center justify-center gap-1.5 ${isBlocked ? 'bg-slate-700 text-emerald-400' : 'bg-slate-800 text-rose-400 border border-slate-700'}">
-              <i data-lucide="${isBlocked ? 'unlock' : 'lock'}" class="w-4 h-4"></i>
-              ${isBlocked ? 'Desbloquear' : 'Bloquear Acesso'}
-            </button>
-          </div>
-        `;
         container.appendChild(card);
-      });
+      }
       safeCreateIcons();
     }
 
     function getCurrentCycleKey() {
-      const now = new Date();
-      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      var now = new Date();
+      var month = now.getMonth() + 1;
+      return now.getFullYear() + '-' + (month < 10 ? '0' + month : month);
     }
 
     function getCurrentCycleName() {
@@ -1180,7 +1300,7 @@
 
     function getStoredClients() {
       try {
-        const data = localStorage.getItem(getStorageKey());
+        var data = localStorage.getItem(getStorageKey());
         return data ? JSON.parse(data) : [];
       } catch (e) {
         return [];
@@ -1188,36 +1308,38 @@
     }
 
     function saveStoredClients(clients) {
-      localStorage.setItem(getStorageKey(), JSON.stringify(clients));
+      try {
+        localStorage.setItem(getStorageKey(), JSON.stringify(clients));
+      } catch(e) {}
     }
 
     function openModal() {
       document.getElementById('clientForm').reset();
-      const tenant = getCurrentTenantConfig();
-      const planSelect = document.getElementById('clientPlan');
-      const planLabel = document.getElementById('planSelectLabel');
+      var tenant = getCurrentTenantConfig();
+      var planSelect = document.getElementById('clientPlan');
+      var planLabel = document.getElementById('planSelectLabel');
 
       planSelect.innerHTML = '';
 
       if (tenant && tenant.type === 'iptv') {
         planLabel.textContent = "Plano IPTV *";
-        const iptvPlans = ["1 Tela (Mensal)", "2 Telas (Mensal)", "3 Telas (Mensal)", "Trimestral (1 Tela)", "Semestral", "Anual"];
-        iptvPlans.forEach(p => {
-          const opt = document.createElement('option');
-          opt.value = p;
-          opt.textContent = p;
+        var iptvPlans = ["1 Tela (Mensal)", "2 Telas (Mensal)", "3 Telas (Mensal)", "Trimestral (1 Tela)", "Semestral", "Anual"];
+        for (var i = 0; i < iptvPlans.length; i++) {
+          var opt = document.createElement('option');
+          opt.value = iptvPlans[i];
+          opt.textContent = iptvPlans[i];
           planSelect.appendChild(opt);
-        });
+        }
       } else {
         planLabel.textContent = "Velocidade Fibra *";
-        const telecomPlans = ["100 Mega", "200 Mega", "300 Mega", "400 Mega", "500 Mega", "600 Mega"];
-        telecomPlans.forEach((p, idx) => {
-          const opt = document.createElement('option');
-          opt.value = p;
-          opt.textContent = p;
-          if (idx === 2) opt.selected = true;
-          planSelect.appendChild(opt);
-        });
+        var telecomPlans = ["100 Mega", "200 Mega", "300 Mega", "400 Mega", "500 Mega", "600 Mega"];
+        for (var j = 0; j < telecomPlans.length; j++) {
+          var optEl = document.createElement('option');
+          optEl.value = telecomPlans[j];
+          optEl.textContent = telecomPlans[j];
+          if (j === 2) optEl.selected = true;
+          planSelect.appendChild(optEl);
+        }
       }
 
       document.getElementById('clientModal').classList.remove('hidden');
@@ -1230,7 +1352,7 @@
 
     function saveClient(e) {
       e.preventDefault();
-      const newClient = {
+      var newClient = {
         id: 'client_' + Date.now(),
         name: document.getElementById('clientName').value.trim(),
         plan: document.getElementById('clientPlan').value,
@@ -1240,7 +1362,7 @@
         status: document.getElementById('clientStatus').value
       };
 
-      const clients = getStoredClients();
+      var clients = getStoredClients();
       clients.unshift(newClient);
       saveStoredClients(clients);
       closeModal();
@@ -1248,20 +1370,27 @@
     }
 
     function toggleStatus(id) {
-      const clients = getStoredClients();
-      const client = clients.find(c => c.id === id);
-      if (client) {
-        client.status = client.status === 'paid' ? 'pending' : 'paid';
-        saveStoredClients(clients);
-        renderClients();
+      var clients = getStoredClients();
+      for (var i = 0; i < clients.length; i++) {
+        if (clients[i].id === id) {
+          clients[i].status = clients[i].status === 'paid' ? 'pending' : 'paid';
+          saveStoredClients(clients);
+          renderClients();
+          return;
+        }
       }
     }
 
     function deleteClient(id) {
       if (confirm("Deseja remover este cliente?")) {
-        let clients = getStoredClients();
-        clients = clients.filter(c => c.id !== id);
-        saveStoredClients(clients);
+        var clients = getStoredClients();
+        var updated = [];
+        for (var i = 0; i < clients.length; i++) {
+          if (clients[i].id !== id) {
+            updated.push(clients[i]);
+          }
+        }
+        saveStoredClients(updated);
         renderClients();
       }
     }
@@ -1271,28 +1400,31 @@
         alert("Nenhum WhatsApp cadastrado.");
         return;
       }
-      const formattedPrice = price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      const currentMonth = new Date().toLocaleDateString('pt-BR', { month: 'long' });
-      const todayDay = new Date().getDate();
-      const cfgPix = JSON.parse(localStorage.getItem(getPixConfigKey()) || '{}');
+      var formattedPrice = price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      var currentMonth = new Date().toLocaleDateString('pt-BR', { month: 'long' });
+      var todayDay = new Date().getDate();
+      var cfgPix = {};
+      try {
+        cfgPix = JSON.parse(localStorage.getItem(getPixConfigKey()) || '{}');
+      } catch(e) {}
 
-      let message = "";
+      var message = "";
       if (dueDay === todayDay + 2) {
-        message = `Olá ${name}! Passando para lembrar que sua mensalidade referente ao mês de ${currentMonth} vence em 2 dias (Dia ${dueDay}). Valor: R$ ${formattedPrice}.`;
+        message = "Olá " + name + "! Passando para lembrar que sua mensalidade referente ao mês de " + currentMonth + " vence em 2 dias (Dia " + dueDay + "). Valor: R$ " + formattedPrice + ".";
       } else if (dueDay === todayDay) {
-        message = `Olá ${name}! Sua mensalidade vence hoje (Dia ${dueDay}). Valor: R$ ${formattedPrice}.`;
+        message = "Olá " + name + "! Sua mensalidade vence hoje (Dia " + dueDay + "). Valor: R$ " + formattedPrice + ".";
       } else if (todayDay > dueDay) {
-        message = `Olá ${name}, notamos que sua mensalidade referente a ${currentMonth} (vencimento dia ${dueDay}) ainda consta em aberto. Valor: R$ ${formattedPrice}.`;
+        message = "Olá " + name + ", notamos que sua mensalidade referente a " + currentMonth + " (vencimento dia " + dueDay + ") ainda consta em aberto. Valor: R$ " + formattedPrice + ".";
       } else {
-        message = `Olá ${name}, segue o lembrete da sua mensalidade referente ao mês de ${currentMonth}. Valor: R$ ${formattedPrice}, com vencimento no dia ${dueDay}.`;
+        message = "Olá " + name + ", segue o lembrete da sua mensalidade referente ao mês de " + currentMonth + ". Valor: R$ " + formattedPrice + ", com vencimento no dia " + dueDay + ".";
       }
       
       if (cfgPix.key) {
-        message += `\n\n📌 Pagamento via PIX:\nChave: ${cfgPix.key}`;
-        if (cfgPix.holder) message += `\nTitular: ${cfgPix.holder}`;
+        message += "\n\n📌 Pagamento via PIX:\nChave: " + cfgPix.key;
+        if (cfgPix.holder) message += "\nTitular: " + cfgPix.holder;
       }
 
-      window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(message)}`, '_blank');
+      window.open("https://wa.me/55" + phone + "?text=" + encodeURIComponent(message), '_blank');
     }
 
     function sendReceiptWhatsApp(name, plan, price, phone) {
@@ -1300,15 +1432,15 @@
         alert("Nenhum WhatsApp cadastrado.");
         return;
       }
-      const formattedPrice = price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      const currentMonth = new Date().toLocaleDateString('pt-BR', { month: 'long' });
-      const message = `Olá ${name}! ✅ Confirmamos o recebimento da sua mensalidade referente ao mês de ${currentMonth} no valor de R$ ${formattedPrice}. Muito obrigado por sua parceria!`;
-      window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(message)}`, '_blank');
+      var formattedPrice = price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      var currentMonth = new Date().toLocaleDateString('pt-BR', { month: 'long' });
+      var message = "Olá " + name + "! ✅ Confirmamos o recebimento da sua mensalidade referente ao mês de " + currentMonth + " no valor de R$ " + formattedPrice + ". Muito obrigado por sua parceria!";
+      window.open("https://wa.me/55" + phone + "?text=" + encodeURIComponent(message), '_blank');
     }
 
     function setFilter(filter) {
       currentFilter = filter;
-      const buttons = { 
+      var buttons = { 
         all: document.getElementById('filterAll'), 
         in2days: document.getElementById('filterIn2Days'),
         today: document.getElementById('filterToday'),
@@ -1316,110 +1448,123 @@
         paid: document.getElementById('filterPaid') 
       };
 
-      Object.keys(buttons).forEach(key => {
-        if (key === filter) {
-          buttons[key].className = 'touch-target text-[11px] font-bold rounded-lg py-2 transition-all text-white bg-slate-800 shadow-sm';
-        } else {
-          buttons[key].className = 'touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-slate-400 hover:text-slate-200 bg-transparent';
+      for (var key in buttons) {
+        if (buttons.hasOwnProperty(key)) {
+          if (key === filter) {
+            buttons[key].className = 'touch-target text-[11px] font-bold rounded-lg py-2 transition-all text-white bg-slate-800 shadow-sm';
+          } else {
+            buttons[key].className = 'touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-slate-400 hover:text-slate-200 bg-transparent';
+          }
         }
-      });
+      }
       renderClients();
     }
 
     function renderClients() {
       if (currentRole !== 'tenant') return;
-      const clients = getStoredClients();
-      const searchQuery = (document.getElementById('searchInput').value || '').toLowerCase().trim();
-      const todayDay = new Date().getDate();
+      var clients = getStoredClients();
+      var searchQuery = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+      var todayDay = new Date().getDate();
 
-      const moneyPaid = clients.filter(c => c.status === 'paid').reduce((acc, c) => acc + c.price, 0);
-      const moneyPending = clients.filter(c => c.status !== 'paid').reduce((acc, c) => acc + c.price, 0);
-      const moneyTotal = moneyPaid + moneyPending;
-      const rate = moneyTotal > 0 ? Math.round((moneyPaid / moneyTotal) * 100) : 0;
+      var moneyPaid = 0;
+      var moneyPending = 0;
+      var countPaid = 0;
+      var countPending = 0;
+
+      for (var i = 0; i < clients.length; i++) {
+        var c = clients[i];
+        if (c.status === 'paid') {
+          moneyPaid += c.price;
+          countPaid++;
+        } else {
+          moneyPending += c.price;
+          countPending++;
+        }
+      }
+
+      var moneyTotal = moneyPaid + moneyPending;
+      var rate = moneyTotal > 0 ? Math.round((moneyPaid / moneyTotal) * 100) : 0;
 
       document.getElementById('statMoneyPaid').textContent = moneyPaid.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
       document.getElementById('statMoneyPending').textContent = moneyPending.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
       document.getElementById('statMoneyTotal').textContent = moneyTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-      document.getElementById('statCollectionRate').textContent = `${rate}% Recebido`;
+      document.getElementById('statCollectionRate').textContent = rate + '% Recebido';
 
       document.getElementById('counterTotal').textContent = clients.length;
-      document.getElementById('counterPaid').textContent = clients.filter(c => c.status === 'paid').length;
-      document.getElementById('counterPending').textContent = clients.filter(c => c.status === 'pending').length;
+      document.getElementById('counterPaid').textContent = countPaid;
+      document.getElementById('counterPending').textContent = countPending;
 
-      const filtered = clients.filter(c => {
-        if (!c.name.toLowerCase().includes(searchQuery)) return false;
-        if (currentFilter === 'paid') return c.status === 'paid';
-        if (currentFilter === 'pending') return c.status === 'pending' && todayDay > c.dueDay;
-        if (currentFilter === 'today') return c.status !== 'paid' && c.dueDay === todayDay;
-        if (currentFilter === 'in2days') return c.status !== 'paid' && c.dueDay === (todayDay + 2);
-        return true;
-      });
+      var filtered = [];
+      for (var j = 0; j < clients.length; j++) {
+        var item = clients[j];
+        if (searchQuery && item.name.toLowerCase().indexOf(searchQuery) === -1) continue;
+        if (currentFilter === 'paid' && item.status !== 'paid') continue;
+        if (currentFilter === 'pending' && (item.status === 'paid' || todayDay <= item.dueDay)) continue;
+        if (currentFilter === 'today' && (item.status === 'paid' || item.dueDay !== todayDay)) continue;
+        if (currentFilter === 'in2days' && (item.status === 'paid' || item.dueDay !== (todayDay + 2))) continue;
+        filtered.push(item);
+      }
 
-      const container = document.getElementById('clientsList');
-      const emptyState = document.getElementById('emptyState');
+      var container = document.getElementById('clientsList');
+      var emptyState = document.getElementById('emptyState');
       container.innerHTML = '';
 
       if (filtered.length === 0) emptyState.classList.remove('hidden');
       else emptyState.classList.add('hidden');
 
-      filtered.forEach(client => {
-        const isPaid = client.status === 'paid';
-        const isToday = !isPaid && client.dueDay === todayDay;
-        const isIn2Days = !isPaid && client.dueDay === (todayDay + 2);
-        const isLate = !isPaid && todayDay > client.dueDay;
-        const formattedPrice = client.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      for (var k = 0; k < filtered.length; k++) {
+        var client = filtered[k];
+        var isPaid = client.status === 'paid';
+        var isToday = !isPaid && client.dueDay === todayDay;
+        var isIn2Days = !isPaid && client.dueDay === (todayDay + 2);
+        var isLate = !isPaid && todayDay > client.dueDay;
+        var formattedPrice = client.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-        const card = document.createElement('div');
-        card.className = `bg-slate-900 border ${isPaid ? 'border-slate-800/80' : isToday ? 'border-amber-500/60' : isIn2Days ? 'border-cyan-500/60' : isLate ? 'border-rose-500/60' : 'border-slate-800'} rounded-2xl p-4 transition-all shadow-md space-y-3`;
+        var card = document.createElement('div');
+        card.className = 'bg-slate-900 border ' + (isPaid ? 'border-slate-800/80' : isToday ? 'border-amber-500/60' : isIn2Days ? 'border-cyan-500/60' : isLate ? 'border-rose-500/60' : 'border-slate-800') + ' rounded-2xl p-4 transition-all shadow-md space-y-3';
 
-        card.innerHTML = `
-          <div class="flex items-start justify-between gap-2">
-            <div class="space-y-1 pr-2">
-              <div class="flex items-center gap-2">
-                <h3 class="font-bold text-base text-white line-clamp-1">${client.name}</h3>
-                ${isIn2Days ? '<span class="px-2 py-0.5 text-[10px] font-extrabold bg-cyan-500/20 text-cyan-400 rounded-md border border-cyan-500/30">Em 2 Dias</span>' : ''}
-                ${isToday ? '<span class="px-2 py-0.5 text-[10px] font-extrabold bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/30">Vence Hoje</span>' : ''}
-                ${isLate ? '<span class="px-2 py-0.5 text-[10px] font-extrabold bg-rose-500/20 text-rose-400 rounded-md border border-rose-500/30">Atrasado</span>' : ''}
-              </div>
-              <p class="text-xs text-slate-400 font-medium">${client.plan} • <span class="text-slate-200 font-semibold">R$ ${formattedPrice}</span></p>
-            </div>
-            <button onclick="deleteClient('${client.id}')" class="text-slate-500 hover:text-rose-400 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-          </div>
+        card.innerHTML = 
+          '<div class="flex items-start justify-between gap-2">' +
+            '<div class="space-y-1 pr-2">' +
+              '<div class="flex items-center gap-2">' +
+                '<h3 class="font-bold text-base text-white line-clamp-1">' + client.name + '</h3>' +
+                (isIn2Days ? '<span class="px-2 py-0.5 text-[10px] font-extrabold bg-cyan-500/20 text-cyan-400 rounded-md border border-cyan-500/30">Em 2 Dias</span>' : '') +
+                (isToday ? '<span class="px-2 py-0.5 text-[10px] font-extrabold bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/30">Vence Hoje</span>' : '') +
+                (isLate ? '<span class="px-2 py-0.5 text-[10px] font-extrabold bg-rose-500/20 text-rose-400 rounded-md border border-rose-500/30">Atrasado</span>' : '') +
+              '</div>' +
+              '<p class="text-xs text-slate-400 font-medium">' + client.plan + ' • <span class="text-slate-200 font-semibold">R$ ' + formattedPrice + '</span></p>' +
+            '</div>' +
+            '<button onclick="deleteClient(\'' + client.id + '\')" class="text-slate-500 hover:text-rose-400 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>' +
+          '</div>' +
+          '<div class="flex items-center justify-between border-t border-slate-800/60 pt-2.5 text-xs">' +
+            '<span class="' + (isIn2Days ? 'text-cyan-400 font-bold' : isToday ? 'text-amber-400 font-bold' : isLate ? 'text-rose-400 font-semibold' : 'text-slate-300') + '">' +
+              'Vence todo: <strong class="text-white font-bold">Dia ' + client.dueDay + '</strong>' +
+            '</span>' +
+            '<div class="flex items-center gap-1.5">' +
+              (isPaid && client.phone ? 
+                '<button onclick="sendReceiptWhatsApp(\'' + client.name + '\', \'' + client.plan + '\', ' + client.price + ', \'' + client.phone + '\')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold text-[11px]">' +
+                  '<i data-lucide="receipt" class="w-3.5 h-3.5"></i> Recibo' +
+                '</button>' : '') +
+              (!isPaid && client.phone ? 
+                '<button onclick="openWhatsApp(\'' + client.name + '\', \'' + client.plan + '\', ' + client.price + ', ' + client.dueDay + ', \'' + client.phone + '\')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg ' + (isIn2Days ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20') + ' font-semibold text-[11px]">' +
+                  '<i data-lucide="message-circle" class="w-3.5 h-3.5"></i> ' + (isIn2Days ? 'Lembrar 2 Dias' : 'Cobrar PIX') +
+                '</button>' : '') +
+            '</div>' +
+          '</div>' +
+          '<button onclick="toggleStatus(\'' + client.id + '\')" class="w-full touch-target rounded-xl font-black text-sm tracking-wider uppercase flex items-center justify-center gap-2 ' + (isPaid ? 'bg-emerald-600 text-white' : isToday ? 'bg-amber-600 text-white' : isIn2Days ? 'bg-cyan-700 text-white' : isLate ? 'bg-rose-600 text-white animate-pulse' : 'bg-slate-800 text-slate-300 border border-slate-700') + '">' +
+            '<i data-lucide="' + (isPaid ? 'check-circle-2' : isToday ? 'clock' : isIn2Days ? 'bell' : 'alert-circle') + '"></i>' +
+            (isPaid ? 'PAGO' : isToday ? 'VENCE HOJE' : isIn2Days ? 'VENCE EM 2 DIAS' : isLate ? 'VENCIDO' : 'A VENCER') +
+          '</button>';
 
-          <div class="flex items-center justify-between border-t border-slate-800/60 pt-2.5 text-xs">
-            <span class="${isIn2Days ? 'text-cyan-400 font-bold' : isToday ? 'text-amber-400 font-bold' : isLate ? 'text-rose-400 font-semibold' : 'text-slate-300'}">
-              Vence todo: <strong class="text-white font-bold">Dia ${client.dueDay}</strong>
-            </span>
-            
-            <div class="flex items-center gap-1.5">
-              ${isPaid && client.phone ? `
-                <button onclick="sendReceiptWhatsApp('${client.name}', '${client.plan}', ${client.price}, '${client.phone}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold text-[11px]">
-                  <i data-lucide="receipt" class="w-3.5 h-3.5"></i> Recibo
-                </button>
-              ` : ''}
-
-              ${!isPaid && client.phone ? `
-                <button onclick="openWhatsApp('${client.name}', '${client.plan}', ${client.price}, ${client.dueDay}, '${client.phone}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg ${isIn2Days ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'} font-semibold text-[11px]">
-                  <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> ${isIn2Days ? 'Lembrar 2 Dias' : 'Cobrar PIX'}
-                </button>
-              ` : ''}
-            </div>
-          </div>
-
-          <button onclick="toggleStatus('${client.id}')" class="w-full touch-target rounded-xl font-black text-sm tracking-wider uppercase flex items-center justify-center gap-2 ${isPaid ? 'bg-emerald-600 text-white' : isToday ? 'bg-amber-600 text-white' : isIn2Days ? 'bg-cyan-700 text-white' : isLate ? 'bg-rose-600 text-white animate-pulse' : 'bg-slate-800 text-slate-300 border border-slate-700'}">
-            <i data-lucide="${isPaid ? 'check-circle-2' : isToday ? 'clock' : isIn2Days ? 'bell' : isLate ? 'alert-circle' : 'calendar'}"></i>
-            ${isPaid ? 'PAGO' : isToday ? 'VENCE HOJE' : isIn2Days ? 'VENCE EM 2 DIAS' : isLate ? 'VENCIDO' : 'A VENCER'}
-          </button>
-        `;
         container.appendChild(card);
-      });
+      }
       safeCreateIcons();
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const monthName = getCurrentCycleName();
+    document.addEventListener('DOMContentLoaded', function() {
+      var monthName = getCurrentCycleName();
       document.getElementById('activeMonthDisplay').textContent = monthName;
-      document.getElementById('currentCycleLabel').textContent = `Ciclo: ${monthName}`;
+      document.getElementById('currentCycleLabel').textContent = 'Ciclo: ' + monthName;
       checkAuth();
       setFilter('all');
     });
