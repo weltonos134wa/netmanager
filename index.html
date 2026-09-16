@@ -49,7 +49,7 @@
 
 <body class="bg-slate-950 text-slate-100 min-h-screen antialiased selection:bg-emerald-500 selection:text-white">
 
-  <!-- BARRA DE RETORNO AO MASTER -->
+  <!-- BARRA DE RETORNO AO MASTER (QUANDO O MASTER ESTÁ VENDO O PAINEL DO CLIENTE) -->
   <div id="masterImpersonationBar" class="hidden sticky top-0 z-50 bg-amber-500 text-slate-950 px-4 py-2 text-xs font-bold flex items-center justify-between shadow-lg">
     <div class="flex items-center gap-2">
       <i data-lucide="shield-alert" class="w-4 h-4"></i>
@@ -78,7 +78,7 @@
             type="text" 
             id="loginUser" 
             required 
-            placeholder="fibra1, iptv1, admin ou master" 
+            placeholder="henrique, fibra1, iptv1 ou master" 
             autocomplete="username"
             autocapitalize="none"
             class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-base"
@@ -118,7 +118,7 @@
     </div>
   </div>
 
-  <!-- 2. PAINEL DO ADMINISTRADOR MASTER -->
+  <!-- 2. PAINEL DO ADMINISTRADOR MASTER (VOCÊ) -->
   <div id="masterContainer" class="hidden pb-24">
     <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3">
       <div class="max-w-md mx-auto flex items-center justify-between gap-2">
@@ -180,7 +180,7 @@
     </main>
   </div>
 
-  <!-- 3. PAINEL DO PROVEDOR -->
+  <!-- 3. PAINEL DO PROVEDOR (OPERACIONAL) -->
   <div id="appContainer" class="hidden pb-24">
     <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3">
       <div class="max-w-md mx-auto flex items-center justify-between gap-2">
@@ -583,9 +583,21 @@
 
   <script>
     // =========================================================================
-    // ⭐️ CONTAS GLOBAIS COM CLIENTES INICIAIS DE DEMONSTRAÇÃO
+    // ⭐️ LISTA GLOBAL DE CONTAS LIBERADAS (GARANTIDA EM QUALQUER CELULAR)
     // =========================================================================
     var GLOBAL_LICENSED_TENANTS = [
+      {
+        id: 'prov_henrique',
+        name: 'Provedor Henrique',
+        user: 'henrique',
+        pass: '12345678',
+        type: 'telecom',
+        fee: 49.90,
+        dueDay: 20,
+        phone: '11947988158',
+        status: 'active',
+        paidStatus: 'paid'
+      },
       {
         id: 'prov_demo',
         name: 'Provedor Demonstração (Telecom)',
@@ -709,7 +721,7 @@
       } catch (e) {}
     }
 
-    // NUNCA APAGA O BANCO DE DADOS (MASTER_STORAGE_KEY)
+    // NUNCA APAGA O BANCO DE DADOS (MASTER_STORAGE_KEY) - Apenas limpa a sessão para não sumir o master!
     function forceCleanReset() {
       if (confirm("Deseja desconectar a sessão deste aparelho?")) {
         try {
@@ -722,6 +734,7 @@
       }
     }
 
+    // SINCRONIZAÇÃO TOTAL: Preserva e nunca apaga o que foi criado
     function getMasterTenants() {
       var localData = [];
       try {
@@ -732,11 +745,13 @@
       var mergedMap = {};
       var i;
 
+      // 1. Carrega os padrões do código
       for (i = 0; i < GLOBAL_LICENSED_TENANTS.length; i++) {
         var item = GLOBAL_LICENSED_TENANTS[i];
         mergedMap[item.user.toLowerCase().trim()] = item;
       }
 
+      // 2. Mescla com os dados salvos localmente sem apagar nada
       if (Array.isArray(localData)) {
         for (i = 0; i < localData.length; i++) {
           var t = localData[i];
@@ -944,6 +959,7 @@
       }
     }
 
+    // O MASTER PODE ENTRAR NO PAINEL DO CLIENTE SEM DIGITAR SENHA
     function enterAsTenant(username) {
       currentUser = username;
       currentRole = "tenant";
@@ -955,6 +971,7 @@
       checkAuth();
     }
 
+    // BOTÃO PARA O MASTER VOLTAR AO SEU PAINEL COM 1 TOQUE
     function returnToMasterPanel() {
       currentUser = "master";
       currentRole = "master";
