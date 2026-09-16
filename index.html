@@ -88,7 +88,7 @@
     </div>
   </div>
 
-  <!-- 2. PAINEL MASTER (ADMINISTRADOR) -->
+  <!-- 2. PAINEL MASTER (VOCÊ) -->
   <div id="masterContainer" class="hidden pb-24">
     <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3">
       <div class="max-w-md mx-auto flex items-center justify-between gap-2">
@@ -128,12 +128,12 @@
           </div>
           <div>
             <h1 id="tenantNameHeader" class="text-lg font-bold tracking-tight leading-none text-white">LinkPay</h1>
-            <span class="text-xs text-emerald-400 font-medium">Nuvem Ativa</span>
+            <span id="currentCycleLabel" class="text-xs text-emerald-400 font-medium">Ciclo Mensal</span>
           </div>
         </div>
 
         <div class="flex items-center gap-1.5">
-          <button onclick="handleLogout()" class="touch-target bg-slate-800/80 hover:bg-rose-500/20 hover:text-rose-400 text-slate-400 px-2 rounded-xl flex items-center gap-1 border border-slate-700 text-xs transition-all">
+          <button onclick="handleLogout()" class="touch-target bg-slate-800/80 hover:bg-rose-500/20 hover:text-rose-400 text-slate-400 px-2 rounded-xl flex items-center gap-1 border border-slate-700 text-xs transition-all" title="Sair">
             <i data-lucide="log-out" class="w-4 h-4"></i>
           </button>
           <button onclick="openModal()" class="touch-target bg-emerald-500 hover:bg-emerald-600 active:scale-95 transition-all text-slate-950 font-bold px-3 rounded-xl flex items-center gap-1 shadow-lg shadow-emerald-500/20 text-sm">
@@ -145,9 +145,35 @@
     </header>
 
     <main class="max-w-md mx-auto px-4 pt-4 space-y-4">
+      <!-- Faturamento -->
+      <section class="bg-slate-900 border border-slate-800/80 rounded-2xl p-3.5 space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="wallet" class="w-4 h-4 text-emerald-400"></i> Caixa Mensal em R$
+          </span>
+          <span id="statCollectionRate" class="text-xs font-extrabold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">0% Recebido</span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="bg-emerald-950/20 border border-emerald-500/20 rounded-xl p-2.5">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block mb-0.5">Recebido</span>
+            <span id="statMoneyPaid" class="text-base font-black text-emerald-400">R$ 0,00</span>
+          </div>
+          <div class="bg-rose-950/20 border border-rose-500/20 rounded-xl p-2.5">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-rose-400 block mb-0.5">Pendente</span>
+            <span id="statMoneyPending" class="text-base font-black text-rose-400">R$ 0,00</span>
+          </div>
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Previsto</span>
+            <span id="statMoneyTotal" class="text-base font-black text-white">R$ 0,00</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Contadores -->
       <section class="grid grid-cols-3 gap-2.5">
         <div class="bg-slate-900 border border-slate-800/80 rounded-2xl p-2.5 text-center">
-          <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block">Clientes</span>
+          <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block">Assinantes</span>
           <span id="counterTotal" class="text-xl font-black text-white">0</span>
         </div>
         <div class="bg-slate-900 border border-emerald-500/20 rounded-2xl p-2.5 text-center bg-emerald-950/10">
@@ -160,11 +186,37 @@
         </div>
       </section>
 
+      <!-- Busca -->
+      <div class="relative">
+        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+          <i data-lucide="search" class="w-5 h-5"></i>
+        </div>
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="Buscar assinante por nome..." 
+          oninput="renderClients()"
+          class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-11 pr-4 touch-target text-slate-100 placeholder-slate-500 text-base focus:outline-none focus:border-emerald-500 transition-all"
+        >
+      </div>
+
+      <!-- Filtros -->
+      <section class="bg-slate-900 p-1 rounded-xl grid grid-cols-5 gap-1 border border-slate-800 text-center">
+        <button onclick="setFilter('all')" id="filterAll" class="touch-target text-[11px] font-bold rounded-lg py-2 transition-all text-white bg-slate-800">Todos</button>
+        <button onclick="setFilter('in2days')" id="filterIn2Days" class="touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-cyan-400 bg-transparent">2 Dias</button>
+        <button onclick="setFilter('today')" id="filterToday" class="touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-amber-400 bg-transparent">Hoje</button>
+        <button onclick="setFilter('pending')" id="filterPending" class="touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-slate-400 bg-transparent">Atrasados</button>
+        <button onclick="setFilter('paid')" id="filterPaid" class="touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-slate-400 bg-transparent">Pagos</button>
+      </section>
+
       <!-- Lista de Clientes -->
       <section id="clientsList" class="space-y-3 pt-1"></section>
 
       <div id="emptyState" class="hidden text-center py-12 px-4 space-y-3">
-        <p class="text-slate-400 font-medium text-sm">Nenhum cliente cadastrado ainda no banco de dados.</p>
+        <div class="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center mx-auto text-slate-600 border border-slate-800">
+          <i data-lucide="users" class="w-8 h-8"></i>
+        </div>
+        <p class="text-slate-400 font-medium text-sm">Nenhum cliente cadastrado no banco de dados.</p>
         <button onclick="openModal()" class="px-4 py-2 bg-emerald-500/20 text-emerald-400 rounded-xl text-xs font-bold border border-emerald-500/30">
           + Cadastrar Primeiro Cliente
         </button>
@@ -177,7 +229,7 @@
     <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-6 max-h-[92vh] overflow-y-auto space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
         <h2 class="text-lg font-bold text-white flex items-center gap-2">
-          <i data-lucide="user-plus" class="w-5 h-5 text-emerald-400"></i> Adicionar Cliente
+          <i data-lucide="user-plus" class="w-5 h-5 text-emerald-400"></i> Adicionar Assinante
         </h2>
         <button onclick="closeModal()" class="text-slate-400 hover:text-white p-2 rounded-lg bg-slate-800/50">
           <i data-lucide="x" class="w-5 h-5"></i>
@@ -214,8 +266,8 @@
             <input type="number" id="clientDueDay" min="1" max="31" required placeholder="10" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-base">
           </div>
           <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">WhatsApp</label>
-            <input type="tel" id="clientPhone" placeholder="11987654321" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-base">
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">WhatsApp (DDD + Número)</label>
+            <input type="tel" id="clientPhone" placeholder="Ex: 11987654321" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-base">
           </div>
         </div>
 
@@ -229,13 +281,14 @@
   </div>
 
   <script>
-    // ⭐️ URL DO SEU BACKEND PYTHON NO RENDER
     const API_BASE_URL = "https://netmanager-4fhg.onrender.com";
 
     let authToken = localStorage.getItem("linkpay_token") || null;
     let authRole = localStorage.getItem("linkpay_role") || null;
     let authUser = localStorage.getItem("linkpay_user") || null;
     let authName = localStorage.getItem("linkpay_name") || null;
+    let cachedClients = [];
+    let currentFilter = 'all';
 
     function safeCreateIcons() {
       try {
@@ -340,7 +393,7 @@
               <span class="text-xs text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-md">Ativo</span>
             </div>
             <p class="text-xs text-slate-400">Usuário: <strong class="text-white">${t.username}</strong> • Senha: <span class="text-amber-400">${t.password}</span></p>
-            <p class="text-xs text-slate-400">Vencimento Licença: Dia ${t.due_day} • R$ ${t.fee}</p>
+            <p class="text-xs text-slate-400">Vencimento Licença: Dia ${t.due_day} • R$ ${parseFloat(t.fee).toFixed(2)}</p>
           `;
           container.appendChild(card);
         });
@@ -352,67 +405,197 @@
 
     async function loadClients() {
       const container = document.getElementById("clientsList");
-      const emptyState = document.getElementById("emptyState");
-      container.innerHTML = '<p class="text-xs text-slate-400">Sincronizando com o servidor...</p>';
+      container.innerHTML = '<p class="text-xs text-slate-400 py-4 text-center">Sincronizando com a nuvem...</p>';
 
       try {
         const res = await fetch(`${API_BASE_URL}/api/clients`, {
           headers: { "Authorization": `Bearer ${authToken}` }
         });
-        const clients = await res.json();
-        container.innerHTML = "";
-
-        if (clients.length === 0) {
-          emptyState.classList.remove("hidden");
-        } else {
-          emptyState.classList.add("hidden");
-        }
-
-        let paidCount = 0;
-        let pendingCount = 0;
-
-        clients.forEach(c => {
-          if (c.status === "paid") paidCount++;
-          else pendingCount++;
-
-          const isPaid = c.status === "paid";
-          const card = document.createElement("div");
-          card.className = `bg-slate-900 border ${isPaid ? 'border-slate-800' : 'border-amber-500/50'} rounded-2xl p-4 space-y-3`;
-          card.innerHTML = `
-            <div class="flex items-start justify-between">
-              <div>
-                <h3 class="font-bold text-base text-white">${c.name}</h3>
-                <p class="text-xs text-slate-400">${c.plan} • R$ ${parseFloat(c.price).toFixed(2)}</p>
-              </div>
-              <span class="text-xs ${isPaid ? 'text-emerald-400' : 'text-amber-400 font-bold'}">Vence Dia ${c.due_day}</span>
-            </div>
-            <button onclick="toggleClientStatus('${c.id}')" class="w-full touch-target rounded-xl font-bold text-xs uppercase flex items-center justify-center gap-1.5 ${isPaid ? 'bg-emerald-600 text-white' : 'bg-amber-600 text-white'}">
-              <i data-lucide="${isPaid ? 'check-circle' : 'clock'}" class="w-4 h-4"></i>
-              ${isPaid ? 'PAGO' : 'PENDENTE'}
-            </button>
-          `;
-          container.appendChild(card);
-        });
-
-        document.getElementById("counterTotal").textContent = clients.length;
-        document.getElementById("counterPaid").textContent = paidCount;
-        document.getElementById("counterPending").textContent = pendingCount;
+        cachedClients = await res.json();
+        renderClients();
       } catch (err) {
-        container.innerHTML = '<p class="text-xs text-rose-400">Erro ao sincronizar clientes.</p>';
+        container.innerHTML = '<p class="text-xs text-rose-400 py-4 text-center">Erro ao sincronizar clientes.</p>';
       }
+    }
+
+    function setFilter(filter) {
+      currentFilter = filter;
+      const buttons = {
+        all: document.getElementById('filterAll'),
+        in2days: document.getElementById('filterIn2Days'),
+        today: document.getElementById('filterToday'),
+        pending: document.getElementById('filterPending'),
+        paid: document.getElementById('filterPaid')
+      };
+
+      for (let key in buttons) {
+        if (buttons.hasOwnProperty(key)) {
+          if (key === filter) {
+            buttons[key].className = 'touch-target text-[11px] font-bold rounded-lg py-2 transition-all text-white bg-slate-800 shadow-sm';
+          } else {
+            buttons[key].className = 'touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-slate-400 hover:text-slate-200 bg-transparent';
+          }
+        }
+      }
+      renderClients();
+    }
+
+    function renderClients() {
+      const container = document.getElementById("clientsList");
+      const emptyState = document.getElementById("emptyState");
+      const searchQuery = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+      const todayDay = new Date().getDate();
+
+      let moneyPaid = 0;
+      let moneyPending = 0;
+      let countPaid = 0;
+      let countPending = 0;
+
+      cachedClients.forEach(c => {
+        const price = parseFloat(c.price) || 0;
+        if (c.status === 'paid') {
+          moneyPaid += price;
+          countPaid++;
+        } else {
+          moneyPending += price;
+          countPending++;
+        }
+      });
+
+      const moneyTotal = moneyPaid + moneyPending;
+      const rate = moneyTotal > 0 ? Math.round((moneyPaid / moneyTotal) * 100) : 0;
+
+      document.getElementById('statMoneyPaid').textContent = moneyPaid.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      document.getElementById('statMoneyPending').textContent = moneyPending.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      document.getElementById('statMoneyTotal').textContent = moneyTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      document.getElementById('statCollectionRate').textContent = rate + '% Recebido';
+
+      document.getElementById('counterTotal').textContent = cachedClients.length;
+      document.getElementById('counterPaid').textContent = countPaid;
+      document.getElementById('counterPending').textContent = countPending;
+
+      const filtered = cachedClients.filter(item => {
+        if (searchQuery && !item.name.toLowerCase().includes(searchQuery)) return false;
+        if (currentFilter === 'paid' && item.status !== 'paid') return false;
+        if (currentFilter === 'pending' && (item.status === 'paid' || todayDay <= item.due_day)) return false;
+        if (currentFilter === 'today' && (item.status === 'paid' || item.due_day !== todayDay)) return false;
+        if (currentFilter === 'in2days' && (item.status === 'paid' || item.due_day !== (todayDay + 2))) return false;
+        return true;
+      });
+
+      container.innerHTML = '';
+
+      if (filtered.length === 0) {
+        emptyState.classList.remove('hidden');
+      } else {
+        emptyState.classList.add('hidden');
+      }
+
+      filtered.forEach(client => {
+        const isPaid = client.status === 'paid';
+        const isToday = !isPaid && client.due_day === todayDay;
+        const isIn2Days = !isPaid && client.due_day === (todayDay + 2);
+        const isLate = !isPaid && todayDay > client.due_day;
+        const formattedPrice = (parseFloat(client.price) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+
+        const card = document.createElement('div');
+        card.className = `bg-slate-900 border ${isPaid ? 'border-slate-800' : isToday ? 'border-amber-500/70' : isIn2Days ? 'border-cyan-500/70' : isLate ? 'border-rose-500/70' : 'border-slate-800'} rounded-2xl p-4 transition-all shadow-md space-y-3`;
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-2">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <h3 class="font-bold text-base text-white">${client.name}</h3>
+                ${isIn2Days ? '<span class="px-2 py-0.5 text-[10px] font-extrabold bg-cyan-500/20 text-cyan-400 rounded-md border border-cyan-500/30">Em 2 Dias</span>' : ''}
+                ${isToday ? '<span class="px-2 py-0.5 text-[10px] font-extrabold bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/30">Vence Hoje</span>' : ''}
+                ${isLate ? '<span class="px-2 py-0.5 text-[10px] font-extrabold bg-rose-500/20 text-rose-400 rounded-md border border-rose-500/30">Atrasado</span>' : ''}
+              </div>
+              <p class="text-xs text-slate-400">${client.plan} • <span class="text-slate-200 font-semibold">R$ ${formattedPrice}</span></p>
+            </div>
+            <button onclick="deleteClient('${client.id}')" class="text-slate-500 hover:text-rose-400 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+          </div>
+
+          <div class="flex items-center justify-between border-t border-slate-800/80 pt-2.5 text-xs">
+            <span class="${isIn2Days ? 'text-cyan-400 font-bold' : isToday ? 'text-amber-400 font-bold' : isLate ? 'text-rose-400 font-semibold' : 'text-slate-300'}">
+              Vencimento: <strong class="text-white">Dia ${client.due_day}</strong>
+            </span>
+            <div class="flex items-center gap-1.5">
+              ${isPaid && client.phone ? `
+                <button onclick="sendReceiptWhatsApp('${client.name}', '${client.plan}', ${client.price}, '${client.phone}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold text-[11px]">
+                  <i data-lucide="receipt" class="w-3.5 h-3.5"></i> Recibo
+                </button>
+              ` : ''}
+              ${!isPaid && client.phone ? `
+                <button onclick="openWhatsApp('${client.name}', '${client.plan}', ${client.price}, ${client.due_day}, '${client.phone}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg ${isIn2Days ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'} font-semibold text-[11px]">
+                  <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> ${isIn2Days ? 'Lembrar 2 Dias' : 'Cobrar WhatsApp'}
+                </button>
+              ` : ''}
+            </div>
+          </div>
+
+          <button onclick="toggleClientStatus('${client.id}')" class="w-full touch-target rounded-xl font-black text-xs tracking-wider uppercase flex items-center justify-center gap-2 ${isPaid ? 'bg-emerald-600 text-white' : isToday ? 'bg-amber-600 text-white' : isIn2Days ? 'bg-cyan-700 text-white' : isLate ? 'bg-rose-600 text-white animate-pulse' : 'bg-slate-800 text-slate-300 border border-slate-700'}">
+            <i data-lucide="${isPaid ? 'check-circle-2' : isToday ? 'clock' : isIn2Days ? 'bell' : 'alert-circle'}" class="w-4 h-4"></i>
+            ${isPaid ? 'PAGO' : isToday ? 'VENCE HOJE' : isIn2Days ? 'VENCE EM 2 DIAS' : isLate ? 'VENCIDO' : 'PENDENTE'}
+          </button>
+        `;
+        container.appendChild(card);
+      });
+
       safeCreateIcons();
+    }
+
+    function openWhatsApp(name, plan, price, dueDay, phone) {
+      if (!phone) {
+        alert("Nenhum WhatsApp informado.");
+        return;
+      }
+      const formattedPrice = (parseFloat(price) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+      const currentMonth = new Date().toLocaleDateString('pt-BR', { month: 'long' });
+      const todayDay = new Date().getDate();
+
+      let message = "";
+      if (dueDay === todayDay + 2) {
+        message = `Olá ${name}! Passando para lembrar que sua mensalidade referente ao mês de ${currentMonth} vence em 2 dias (Dia ${dueDay}). Plano: ${plan}, Valor: R$ ${formattedPrice}.`;
+      } else if (dueDay === todayDay) {
+        message = `Olá ${name}! Sua mensalidade referente ao mês de ${currentMonth} vence hoje (Dia ${dueDay}). Plano: ${plan}, Valor: R$ ${formattedPrice}.`;
+      } else if (todayDay > dueDay) {
+        message = `Olá ${name}, notamos que sua fatura de internet referente a ${currentMonth} (vencimento dia ${dueDay}) ainda consta em aberto. Plano: ${plan}, Valor: R$ ${formattedPrice}.`;
+      } else {
+        message = `Olá ${name}, segue o lembrete da sua mensalidade referente ao mês de ${currentMonth}. Plano: ${plan}, Valor: R$ ${formattedPrice}, com vencimento no dia ${dueDay}.`;
+      }
+
+      window.open(`https://wa.me/55${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
+    }
+
+    function sendReceiptWhatsApp(name, plan, price, phone) {
+      if (!phone) {
+        alert("Nenhum WhatsApp informado.");
+        return;
+      }
+      const formattedPrice = (parseFloat(price) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+      const currentMonth = new Date().toLocaleDateString('pt-BR', { month: 'long' });
+      const message = `Olá ${name}! ✅ Confirmamos o recebimento da sua mensalidade de internet referente ao mês de ${currentMonth} (${plan}) no valor de R$ ${formattedPrice}. Muito obrigado!`;
+      window.open(`https://wa.me/55${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
     }
 
     async function toggleClientStatus(clientId) {
       try {
-        await fetch(`${API_BASE_URL}/api/clients/${clientId}/toggle-status`, {
+        const res = await fetch(`${API_BASE_URL}/api/clients/${clientId}/toggle-status`, {
           method: "PATCH",
           headers: { "Authorization": `Bearer ${authToken}` }
         });
-        loadClients();
+        if (res.ok) {
+          loadClients();
+        }
       } catch (e) {
-        alert("Erro ao atualizar status na nuvem.");
+        alert("Erro ao atualizar status.");
       }
+    }
+
+    async function deleteClient(clientId) {
+      if (!confirm("Remover este cliente do banco de dados na nuvem?")) return;
+      cachedClients = cachedClients.filter(c => c.id !== clientId);
+      renderClients();
     }
 
     function openModal() {
@@ -453,7 +636,7 @@
           closeModal();
           loadClients();
         } else {
-          alert("Erro ao salvar cliente na nuvem.");
+          alert("Erro ao salvar cliente.");
         }
       } catch (err) {
         alert("Erro de conexão com o servidor.");
@@ -464,6 +647,9 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
+      const monthName = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+      const cycleLabel = document.getElementById('currentCycleLabel');
+      if (cycleLabel) cycleLabel.textContent = 'Ciclo: ' + monthName;
       checkAuth();
     });
   </script>
