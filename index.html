@@ -9,7 +9,7 @@
   <meta http-equiv="Expires" content="0">
   <title>LinkPay Pro - Gestão & Cobrança</title>
 
-  <!-- Configurações Mobile e PWA -->
+  <!-- Configurações Mobile -->
   <meta name="theme-color" content="#0f172a">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -40,26 +40,28 @@
   </script>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
-    input, select, button {
-      -webkit-tap-highlight-color: transparent;
-    }
-    .touch-target {
-      min-height: 48px;
-    }
-    /* Fallback para fontes e renderização legada */
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
+    * { box-sizing: border-box; }
+    input, select, button { -webkit-tap-highlight-color: transparent; }
+    .touch-target { min-height: 48px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
   </style>
 </head>
 
 <body class="bg-slate-950 text-slate-100 min-h-screen antialiased selection:bg-emerald-500 selection:text-white">
 
+  <!-- BARRA DE RETORNO AO MASTER -->
+  <div id="masterImpersonationBar" class="hidden sticky top-0 z-50 bg-amber-500 text-slate-950 px-4 py-2 text-xs font-bold flex items-center justify-between shadow-lg">
+    <div class="flex items-center gap-2">
+      <i data-lucide="shield-alert" class="w-4 h-4"></i>
+      <span>Visualizando como: <strong id="impersonationUserName"></strong></span>
+    </div>
+    <button onclick="returnToMasterPanel()" class="bg-slate-950 text-amber-400 px-3 py-1 rounded-lg font-extrabold text-[11px] active:scale-95 transition-all">
+      Voltar ao Painel Master
+    </button>
+  </div>
+
   <!-- 1. TELA DE LOGIN -->
-  <div id="loginScreen" class="fixed inset-0 z-50 bg-slate-950 flex items-center justify-center p-4">
+  <div id="loginScreen" class="fixed inset-0 z-40 bg-slate-950 flex items-center justify-center p-4">
     <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5">
       <div class="text-center space-y-2">
         <div class="w-14 h-14 bg-emerald-500/10 text-emerald-400 rounded-2xl border border-emerald-500/20 flex items-center justify-center mx-auto">
@@ -76,7 +78,7 @@
             type="text" 
             id="loginUser" 
             required 
-            placeholder="admin, fibra1, iptv1 ou master" 
+            placeholder="fibra1, iptv1, admin ou master" 
             autocomplete="username"
             autocapitalize="none"
             class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-base"
@@ -110,13 +112,13 @@
 
       <div class="pt-1 text-center">
         <button type="button" onclick="forceCleanReset()" class="text-[11px] text-slate-500 hover:text-slate-300 underline">
-          Problemas ao entrar? Limpar cache do app
+          Desconectar / Limpar Sessão deste celular
         </button>
       </div>
     </div>
   </div>
 
-  <!-- 2. PAINEL MASTER -->
+  <!-- 2. PAINEL DO ADMINISTRADOR MASTER -->
   <div id="masterContainer" class="hidden pb-24">
     <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3">
       <div class="max-w-md mx-auto flex items-center justify-between gap-2">
@@ -126,7 +128,7 @@
           </div>
           <div>
             <h1 class="text-lg font-bold tracking-tight leading-none text-white">Painel Master</h1>
-            <span class="text-xs text-amber-400 font-medium">Gestão de Provedores</span>
+            <span class="text-xs text-amber-400 font-medium">Gestão Geral do Sistema</span>
           </div>
         </div>
 
@@ -187,7 +189,7 @@
             <i data-lucide="wifi" class="w-6 h-6"></i>
           </div>
           <div>
-            <h1 class="text-lg font-bold tracking-tight leading-none text-white">LinkPay</h1>
+            <h1 id="tenantPanelBrand" class="text-lg font-bold tracking-tight leading-none text-white">LinkPay</h1>
             <span id="currentCycleLabel" class="text-xs text-emerald-400 font-medium">Ciclo Atual</span>
           </div>
         </div>
@@ -247,7 +249,7 @@
       <!-- Contadores -->
       <section class="grid grid-cols-3 gap-2.5">
         <div class="bg-slate-900 border border-slate-800/80 rounded-2xl p-2.5 text-center">
-          <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block">Clientes</span>
+          <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block">Assinantes</span>
           <span id="counterTotal" class="text-xl font-black text-white">0</span>
         </div>
         <div class="bg-slate-900 border border-emerald-500/20 rounded-2xl p-2.5 text-center bg-emerald-950/10">
@@ -300,7 +302,10 @@
         <div class="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center mx-auto text-slate-600 border border-slate-800">
           <i data-lucide="users" class="w-8 h-8"></i>
         </div>
-        <p class="text-slate-400 font-medium text-sm">Nenhum cliente encontrado.</p>
+        <p class="text-slate-400 font-medium text-sm">Nenhum assinante cadastrado ainda.</p>
+        <button onclick="openModal()" class="px-4 py-2 bg-emerald-500/20 text-emerald-400 rounded-xl text-xs font-bold border border-emerald-500/30">
+          + Cadastrar Primeiro Assinante
+        </button>
       </div>
     </main>
   </div>
@@ -578,7 +583,7 @@
 
   <script>
     // =========================================================================
-    // ⭐️ LISTA GLOBAL DE CONTAS LIBERADAS (GARANTIDA EM QUALQUER CELULAR)
+    // ⭐️ CONTAS GLOBAIS COM CLIENTES INICIAIS DE DEMONSTRAÇÃO
     // =========================================================================
     var GLOBAL_LICENSED_TENANTS = [
       {
@@ -704,19 +709,19 @@
       } catch (e) {}
     }
 
+    // NUNCA APAGA O BANCO DE DADOS (MASTER_STORAGE_KEY)
     function forceCleanReset() {
-      if (confirm("Deseja limpar os dados de sessão e cache deste aparelho?")) {
+      if (confirm("Deseja desconectar a sessão deste aparelho?")) {
         try {
           localStorage.removeItem('linkpay_logged_user');
           localStorage.removeItem('linkpay_logged_role');
-          localStorage.removeItem(MASTER_STORAGE_KEY);
+          localStorage.removeItem('linkpay_impersonating_by_master');
           sessionStorage.clear();
         } catch(e) {}
         window.location.reload(true);
       }
     }
 
-    // SINCRONIZAÇÃO TOTAL: Funciona em qualquer aparelho antigo ou novo
     function getMasterTenants() {
       var localData = [];
       try {
@@ -773,7 +778,7 @@
           return tenants[i];
         }
       }
-      return { type: 'telecom' };
+      return { type: 'telecom', name: 'LinkPay' };
     }
 
     function saveMasterTenants(tenants) {
@@ -841,16 +846,27 @@
       var loginScreen = document.getElementById('loginScreen');
       var masterContainer = document.getElementById('masterContainer');
       var appContainer = document.getElementById('appContainer');
+      var impBar = document.getElementById('masterImpersonationBar');
 
       loginScreen.classList.add('hidden');
       masterContainer.classList.add('hidden');
       appContainer.classList.add('hidden');
+      impBar.classList.add('hidden');
+
+      var isImpersonating = false;
+      try {
+        isImpersonating = localStorage.getItem('linkpay_impersonating_by_master') === 'true';
+      } catch(e) {}
 
       if (currentRole === 'master') {
         masterContainer.classList.remove('hidden');
         renderMasterPanel();
       } else if (currentRole === 'tenant' && currentUser) {
         appContainer.classList.remove('hidden');
+        if (isImpersonating) {
+          impBar.classList.remove('hidden');
+          document.getElementById('impersonationUserName').textContent = currentUser;
+        }
         checkAutoMonthlyReset();
         setupTenantInterface();
         renderClients();
@@ -863,10 +879,17 @@
     function setupTenantInterface() {
       var tenant = getCurrentTenantConfig();
       var iconEl = document.getElementById('userCategoryIcon');
-      if (tenant && tenant.type === 'iptv') {
-        if (iconEl) iconEl.innerHTML = '<i data-lucide="tv" class="w-6 h-6"></i>';
-      } else {
-        if (iconEl) iconEl.innerHTML = '<i data-lucide="wifi" class="w-6 h-6"></i>';
+      var brandEl = document.getElementById('tenantPanelBrand');
+
+      if (tenant) {
+        if (brandEl) brandEl.textContent = tenant.name || 'LinkPay';
+        if (iconEl) {
+          if (tenant.type === 'iptv') {
+            iconEl.innerHTML = '<i data-lucide="tv" class="w-6 h-6"></i>';
+          } else {
+            iconEl.innerHTML = '<i data-lucide="wifi" class="w-6 h-6"></i>';
+          }
+        }
       }
       safeCreateIcons();
     }
@@ -885,6 +908,7 @@
         try {
           localStorage.setItem('linkpay_logged_user', "master");
           localStorage.setItem('linkpay_logged_role', "master");
+          localStorage.removeItem('linkpay_impersonating_by_master');
         } catch(err) {}
         checkAuth();
         return;
@@ -911,6 +935,7 @@
         try {
           localStorage.setItem('linkpay_logged_user', tenant.user);
           localStorage.setItem('linkpay_logged_role', "tenant");
+          localStorage.removeItem('linkpay_impersonating_by_master');
         } catch(err) {}
         checkAuth();
       } else {
@@ -919,11 +944,34 @@
       }
     }
 
+    function enterAsTenant(username) {
+      currentUser = username;
+      currentRole = "tenant";
+      try {
+        localStorage.setItem('linkpay_logged_user', username);
+        localStorage.setItem('linkpay_logged_role', "tenant");
+        localStorage.setItem('linkpay_impersonating_by_master', 'true');
+      } catch(e) {}
+      checkAuth();
+    }
+
+    function returnToMasterPanel() {
+      currentUser = "master";
+      currentRole = "master";
+      try {
+        localStorage.setItem('linkpay_logged_user', "master");
+        localStorage.setItem('linkpay_logged_role', "master");
+        localStorage.removeItem('linkpay_impersonating_by_master');
+      } catch(e) {}
+      checkAuth();
+    }
+
     function handleLogout() {
       if (confirm("Deseja encerrar a sessão?")) {
         try {
           localStorage.removeItem('linkpay_logged_user');
           localStorage.removeItem('linkpay_logged_role');
+          localStorage.removeItem('linkpay_impersonating_by_master');
         } catch(e) {}
         currentUser = null;
         currentRole = null;
@@ -1266,20 +1314,23 @@
               '</button>' +
             '</div>' +
           '</div>' +
+
           '<div class="flex items-center justify-between border-t border-slate-800/80 pt-2.5 text-xs">' +
             '<span class="text-slate-400">Mensalidade: <strong class="text-white">R$ ' + formattedFee + '</strong> (Dia ' + item.dueDay + ')</span>' +
             '<button onclick="chargeProviderWhatsApp(\'' + item.name + '\', ' + item.fee + ', ' + item.dueDay + ', \'' + item.phone + '\')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-semibold">' +
               '<i data-lucide="message-circle" class="w-3.5 h-3.5"></i> Cobrar Licença' +
             '</button>' +
           '</div>' +
-          '<div class="grid grid-cols-2 gap-2 pt-1">' +
-            '<button onclick="toggleProviderPaid(\'' + item.id + '\')" class="touch-target rounded-xl font-bold text-xs uppercase flex items-center justify-center gap-1.5 ' + (isPaid ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white') + '">' +
-              '<i data-lucide="' + (isPaid ? 'check' : 'alert-circle') + '" class="w-4 h-4"></i>' +
-              (isPaid ? 'Licença Paga' : 'Licença Pendente') +
+
+          '<div class="grid grid-cols-3 gap-1.5 pt-1">' +
+            '<button onclick="enterAsTenant(\'' + item.user + '\')" class="touch-target rounded-xl font-bold text-xs bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 flex items-center justify-center gap-1">' +
+              '<i data-lucide="external-link" class="w-3.5 h-3.5"></i> Ver Painel' +
             '</button>' +
-            '<button onclick="toggleProviderStatus(\'' + item.id + '\')" class="touch-target rounded-xl font-bold text-xs uppercase flex items-center justify-center gap-1.5 ' + (isBlocked ? 'bg-slate-700 text-emerald-400' : 'bg-slate-800 text-rose-400 border border-slate-700') + '">' +
-              '<i data-lucide="' + (isBlocked ? 'unlock' : 'lock') + '" class="w-4 h-4"></i>' +
-              (isBlocked ? 'Desbloquear' : 'Bloquear Acesso') +
+            '<button onclick="toggleProviderPaid(\'' + item.id + '\')" class="touch-target rounded-xl font-bold text-xs uppercase flex items-center justify-center gap-1 ' + (isPaid ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white') + '">' +
+              (isPaid ? 'Pago' : 'Pendente') +
+            '</button>' +
+            '<button onclick="toggleProviderStatus(\'' + item.id + '\')" class="touch-target rounded-xl font-bold text-xs uppercase flex items-center justify-center gap-1 ' + (isBlocked ? 'bg-slate-700 text-emerald-400' : 'bg-slate-800 text-rose-400 border border-slate-700') + '">' +
+              (isBlocked ? 'Ativar' : 'Bloquear') +
             '</button>' +
           '</div>';
 
