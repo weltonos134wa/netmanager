@@ -1,1 +1,1636 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>LinkPay Pro - Gestão & Cobrança</title>
 
+  <!-- Configurações Mobile -->
+  <meta name="theme-color" content="#0f172a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="LinkPay">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              500: '#10b981',
+              600: '#059669',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * { box-sizing: border-box; }
+    input, select, button { -webkit-tap-highlight-color: transparent; }
+    .touch-target { min-height: 48px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  </style>
+</head>
+
+<body class="bg-slate-950 text-slate-100 min-h-screen antialiased selection:bg-emerald-500 selection:text-white">
+
+  <!-- BARRA DE RETORNO AO MASTER -->
+  <div id="masterImpersonationBar" class="hidden sticky top-0 z-50 bg-amber-500 text-slate-950 px-4 py-2 text-xs font-bold flex items-center justify-between shadow-lg">
+    <div class="flex items-center gap-2">
+      <i data-lucide="shield-alert" class="w-4 h-4"></i>
+      <span>Visualizando como: <strong id="impersonationUserName"></strong></span>
+    </div>
+    <button onclick="returnToMasterPanel()" class="bg-slate-950 text-amber-400 px-3 py-1 rounded-lg font-extrabold text-[11px] active:scale-95 transition-all">
+      Voltar ao Painel Master
+    </button>
+  </div>
+
+  <!-- 1. TELA DE LOGIN -->
+  <div id="loginScreen" class="fixed inset-0 z-40 bg-slate-950 flex items-center justify-center p-4">
+    <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5">
+      <div class="text-center space-y-2">
+        <div class="w-14 h-14 bg-emerald-500/10 text-emerald-400 rounded-2xl border border-emerald-500/20 flex items-center justify-center mx-auto">
+          <i data-lucide="shield-check" class="w-8 h-8"></i>
+        </div>
+        <h2 class="text-2xl font-black tracking-tight text-white">LinkPay Pro</h2>
+        <p class="text-xs text-slate-400">Acesso ao Painel Operacional</p>
+      </div>
+
+      <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Usuário</label>
+          <input 
+            type="text" 
+            id="loginUser" 
+            required 
+            placeholder="henrique, fibra1, iptv1 ou master" 
+            autocomplete="username"
+            autocapitalize="none"
+            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-base"
+          >
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-xs font-semibold uppercase tracking-wider text-slate-400">Senha de Acesso</label>
+            <button type="button" onclick="recoverPasswordSupport()" class="text-[11px] text-emerald-400 hover:underline">Esqueceu a senha?</button>
+          </div>
+          <input 
+            type="password" 
+            id="loginPass" 
+            required 
+            placeholder="••••••" 
+            autocomplete="current-password"
+            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-base"
+          >
+        </div>
+
+        <p id="loginError" class="hidden text-xs text-rose-400 text-center font-semibold"></p>
+
+        <button 
+          type="submit" 
+          class="w-full touch-target bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] transition-all text-slate-950 font-black rounded-xl text-base flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25">
+          <i data-lucide="lock-open" class="w-5 h-5"></i>
+          Entrar no Sistema
+        </button>
+      </form>
+
+      <div class="pt-1 text-center">
+        <button type="button" onclick="forceCleanReset()" class="text-[11px] text-slate-500 hover:text-slate-300 underline">
+          Desconectar / Limpar Sessão deste celular
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. PAINEL DO ADMINISTRADOR MASTER -->
+  <div id="masterContainer" class="hidden pb-24">
+    <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3">
+      <div class="max-w-md mx-auto flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <div class="p-2 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20">
+            <i data-lucide="crown" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h1 class="text-lg font-bold tracking-tight leading-none text-white">Painel Master</h1>
+            <span class="text-xs text-amber-400 font-medium">Gestão Geral do Sistema</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          <button onclick="openMasterPixModal()" class="touch-target bg-slate-800/80 hover:bg-slate-700 text-amber-400 px-2 rounded-xl flex items-center gap-1 border border-slate-700 text-xs transition-all" title="Configurar meu PIX">
+            <i data-lucide="qr-code" class="w-4 h-4"></i>
+          </button>
+          <button onclick="handleLogout()" class="touch-target bg-slate-800/80 hover:bg-rose-500/20 hover:text-rose-400 text-slate-400 px-2 rounded-xl flex items-center gap-1 border border-slate-700 text-xs transition-all" title="Sair">
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+          </button>
+          <button onclick="openMasterModal()" class="touch-target bg-amber-500 hover:bg-amber-600 active:scale-95 transition-all text-slate-950 font-bold px-3 rounded-xl flex items-center gap-1 shadow-lg shadow-amber-500/20 text-sm">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Provedor</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-md mx-auto px-4 pt-4 space-y-4">
+      <section class="grid grid-cols-3 gap-2">
+        <div class="bg-slate-900 border border-emerald-500/30 rounded-2xl p-3 text-center bg-emerald-950/10">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block mb-0.5">Recebido (Mês)</span>
+          <span id="masterPaidRevenue" class="text-lg font-black text-emerald-400">R$ 0</span>
+        </div>
+        <div class="bg-slate-900 border border-rose-500/30 rounded-2xl p-3 text-center bg-rose-950/10">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-rose-400 block mb-0.5">A Receber</span>
+          <span id="masterPendingRevenue" class="text-lg font-black text-rose-400">R$ 0</span>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 text-center">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Total Previsto</span>
+          <span id="masterMonthlyTotal" class="text-lg font-black text-white">R$ 0</span>
+        </div>
+      </section>
+
+      <div id="masterPixAlert" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 text-amber-400 text-xs font-semibold">
+          <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0"></i>
+          <span>Configure seu PIX Master para cobrança das licenças.</span>
+        </div>
+        <button onclick="openMasterPixModal()" class="px-2.5 py-1 bg-amber-500 text-slate-950 rounded-lg text-xs font-bold shrink-0">
+          Configurar
+        </button>
+      </div>
+
+      <div class="flex items-center justify-between pt-1">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Provedores Cadastrados (<span id="masterTotalTenants">0</span>)</h2>
+      </div>
+      <section id="masterTenantsList" class="space-y-3"></section>
+    </main>
+  </div>
+
+  <!-- 3. PAINEL DO PROVEDOR -->
+  <div id="appContainer" class="hidden pb-24">
+    <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3">
+      <div class="max-w-md mx-auto flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <div id="userCategoryIcon" class="p-2 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
+            <i data-lucide="wifi" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h1 id="tenantPanelBrand" class="text-lg font-bold tracking-tight leading-none text-white">LinkPay</h1>
+            <span id="currentCycleLabel" class="text-xs text-emerald-400 font-medium">Ciclo Atual</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          <button onclick="openConfigModal()" class="touch-target bg-slate-800/80 hover:bg-slate-700 text-slate-300 px-2 rounded-xl flex items-center gap-1 border border-slate-700 text-xs transition-all" title="Configurações e Segurança">
+            <i data-lucide="settings" class="w-4 h-4 text-emerald-400"></i>
+          </button>
+          <button onclick="handleLogout()" class="touch-target bg-slate-800/80 hover:bg-rose-500/20 hover:text-rose-400 text-slate-400 px-2 rounded-xl flex items-center gap-1 border border-slate-700 text-xs transition-all" title="Sair">
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+          </button>
+          <button onclick="openModal()" class="touch-target bg-emerald-500 hover:bg-emerald-600 active:scale-95 transition-all text-slate-950 font-bold px-3 rounded-xl flex items-center gap-1 shadow-lg shadow-emerald-500/20 text-sm">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Novo</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-md mx-auto px-4 pt-4 space-y-4">
+      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-3 flex items-center justify-between gap-2">
+        <div>
+          <span class="text-xs text-slate-400 block">Competência:</span>
+          <strong id="activeMonthDisplay" class="text-sm font-bold text-white uppercase">Mês Atual</strong>
+        </div>
+        <button onclick="resetMonthlyCycle(true)" class="touch-target px-3 bg-slate-800 hover:bg-slate-700 active:scale-95 border border-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all" title="Virada Manual">
+          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-emerald-400"></i>
+          <span>Virar Mês</span>
+        </button>
+      </section>
+
+      <!-- Faturamento do Provedor -->
+      <section class="bg-slate-900 border border-slate-800/80 rounded-2xl p-3.5 space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="wallet" class="w-4 h-4 text-emerald-400"></i> Caixa Mensal em R$
+          </span>
+          <span id="statCollectionRate" class="text-xs font-extrabold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">0% Recebido</span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="bg-emerald-950/20 border border-emerald-500/20 rounded-xl p-2.5">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block mb-0.5">Recebido</span>
+            <span id="statMoneyPaid" class="text-base font-black text-emerald-400">R$ 0</span>
+          </div>
+          <div class="bg-rose-950/20 border border-rose-500/20 rounded-xl p-2.5">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-rose-400 block mb-0.5">Pendente</span>
+            <span id="statMoneyPending" class="text-base font-black text-rose-400">R$ 0</span>
+          </div>
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Previsto</span>
+            <span id="statMoneyTotal" class="text-base font-black text-white">R$ 0</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Contadores -->
+      <section class="grid grid-cols-3 gap-2.5">
+        <div class="bg-slate-900 border border-slate-800/80 rounded-2xl p-2.5 text-center">
+          <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block">Assinantes</span>
+          <span id="counterTotal" class="text-xl font-black text-white">0</span>
+        </div>
+        <div class="bg-slate-900 border border-emerald-500/20 rounded-2xl p-2.5 text-center bg-emerald-950/10">
+          <span class="text-[10px] font-semibold uppercase tracking-wider text-emerald-400 block">Em Dia</span>
+          <span id="counterPaid" class="text-xl font-black text-emerald-400">0</span>
+        </div>
+        <div class="bg-slate-900 border border-rose-500/20 rounded-2xl p-2.5 text-center bg-rose-950/10">
+          <span class="text-[10px] font-semibold uppercase tracking-wider text-rose-400 block">Atrasados</span>
+          <span id="counterPending" class="text-xl font-black text-rose-400">0</span>
+        </div>
+      </section>
+
+      <!-- Busca -->
+      <div class="relative">
+        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+          <i data-lucide="search" class="w-5 h-5"></i>
+        </div>
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="Buscar cliente por nome..." 
+          oninput="renderClients()"
+          class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-11 pr-4 touch-target text-slate-100 placeholder-slate-500 text-base focus:outline-none focus:border-emerald-500 transition-all"
+        >
+      </div>
+
+      <!-- Filtros -->
+      <section class="bg-slate-900 p-1 rounded-xl grid grid-cols-5 gap-1 border border-slate-800 text-center">
+        <button onclick="setFilter('all')" id="filterAll" class="touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-slate-400 bg-transparent">
+          Todos
+        </button>
+        <button onclick="setFilter('in2days')" id="filterIn2Days" class="touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-cyan-400 bg-transparent">
+          Em 2 Dias
+        </button>
+        <button onclick="setFilter('today')" id="filterToday" class="touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-amber-400 bg-transparent">
+          Hoje
+        </button>
+        <button onclick="setFilter('pending')" id="filterPending" class="touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-slate-400 bg-transparent">
+          Atrasados
+        </button>
+        <button onclick="setFilter('paid')" id="filterPaid" class="touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-slate-400 bg-transparent">
+          Pagos
+        </button>
+      </section>
+
+      <!-- Lista de Cards -->
+      <section id="clientsList" class="space-y-3 pt-1"></section>
+
+      <div id="emptyState" class="hidden text-center py-12 px-4 space-y-3">
+        <div class="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center mx-auto text-slate-600 border border-slate-800">
+          <i data-lucide="users" class="w-8 h-8"></i>
+        </div>
+        <p class="text-slate-400 font-medium text-sm">Nenhum assinante cadastrado ainda.</p>
+        <button onclick="openModal()" class="px-4 py-2 bg-emerald-500/20 text-emerald-400 rounded-xl text-xs font-bold border border-emerald-500/30">
+          + Cadastrar Primeiro Assinante
+        </button>
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL PIX MASTER -->
+  <div id="masterPixModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+          <i data-lucide="qr-code" class="w-5 h-5 text-amber-400"></i>
+          Meu PIX (Recebimento das Licenças)
+        </h2>
+        <button onclick="closeMasterPixModal()" class="text-slate-400 hover:text-white p-2 rounded-lg bg-slate-800/50">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <p class="text-xs text-slate-400">Configure sua chave PIX para aparecer automaticamente nas cobranças aos provedores.</p>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Sua Chave PIX</label>
+          <input 
+            type="text" 
+            id="masterPixKey" 
+            placeholder="Ex: CPF, Celular, E-mail ou Chave Aleatória" 
+            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 text-sm"
+          >
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Seu Nome / Razão Social</label>
+          <input 
+            type="text" 
+            id="masterPixHolder" 
+            placeholder="Ex: Welton Silva / LinkPay" 
+            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 text-sm"
+          >
+        </div>
+        <div class="pt-2">
+          <button onclick="saveMasterPixConfig()" class="w-full touch-target bg-amber-500 hover:bg-amber-600 active:scale-[0.98] text-slate-950 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all">
+            <i data-lucide="save" class="w-4 h-4"></i> Salvar Meu PIX
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL MASTER: EDITAR SENHA -->
+  <div id="masterEditModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+          <i data-lucide="key" class="w-5 h-5 text-amber-400"></i>
+          Redefinir Senha do Provedor
+        </h2>
+        <button onclick="closeMasterEditModal()" class="text-slate-400 hover:text-white p-2 rounded-lg bg-slate-800/50">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <p class="text-xs text-slate-400">Alterar dados de acesso para: <strong id="editTenantName" class="text-white"></strong></p>
+        <input type="hidden" id="editTenantId">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Nova Senha</label>
+          <input 
+            type="text" 
+            id="editTenantPass" 
+            required 
+            placeholder="Digite a nova senha" 
+            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 text-sm"
+          >
+        </div>
+        <div class="pt-2">
+          <button onclick="saveTenantNewPass()" class="w-full touch-target bg-amber-500 hover:bg-amber-600 active:scale-[0.98] text-slate-950 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all">
+            <i data-lucide="check" class="w-4 h-4"></i> Salvar Nova Senha
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE CONFIGURAÇÕES DO PROVEDOR -->
+  <div id="configModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-6 max-h-[92vh] overflow-y-auto space-y-5 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+          <i data-lucide="settings" class="w-5 h-5 text-emerald-400"></i>
+          Configurações & Segurança
+        </h2>
+        <button onclick="closeConfigModal()" class="text-slate-400 hover:text-white p-2 rounded-lg bg-slate-800/50">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Chave PIX para Cobrança</h3>
+        <div>
+          <label class="block text-xs text-slate-500 mb-1">Chave PIX</label>
+          <input 
+            type="text" 
+            id="cfgPixKey" 
+            placeholder="Ex: 11987654321 ou chave aleatória" 
+            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-sm"
+          >
+        </div>
+        <div>
+          <label class="block text-xs text-slate-500 mb-1">Nome do Titular</label>
+          <input 
+            type="text" 
+            id="cfgPixHolder" 
+            placeholder="Ex: Seu Nome ou Empresa Telecom" 
+            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-sm"
+          >
+        </div>
+        <button onclick="savePixConfig()" class="w-full touch-target bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all">
+          <i data-lucide="save" class="w-4 h-4"></i> Salvar Chave PIX
+        </button>
+      </div>
+
+      <div class="border-t border-slate-800 pt-4 space-y-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Alterar Minha Senha de Acesso</h3>
+        <div>
+          <label class="block text-xs text-slate-500 mb-1">Nova Senha</label>
+          <input 
+            type="password" 
+            id="cfgNewPassword" 
+            placeholder="Digite sua nova senha" 
+            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-sm"
+          >
+        </div>
+        <button onclick="changeTenantOwnPassword()" class="w-full touch-target bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all">
+          <i data-lucide="lock" class="w-4 h-4 text-emerald-400"></i> Atualizar Senha
+        </button>
+      </div>
+
+      <div class="border-t border-slate-800 pt-4 space-y-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Segurança de Dados (Backup)</h3>
+        <p class="text-[11px] text-slate-500">Exporte os cadastros para guardar no computador ou importar em outro celular.</p>
+        
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="exportBackupData()" class="touch-target bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all">
+            <i data-lucide="download" class="w-4 h-4 text-emerald-400"></i> Exportar
+          </button>
+          <label class="touch-target bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer">
+            <i data-lucide="upload" class="w-4 h-4 text-amber-400"></i> Importar
+            <input type="file" id="importBackupFile" accept=".json" onchange="importBackupData(event)" class="hidden">
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL MASTER: NOVO PROVEDOR -->
+  <div id="masterModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+          <i data-lucide="user-plus" class="w-5 h-5 text-amber-400"></i>
+          Cadastrar Novo Provedor
+        </h2>
+        <button onclick="closeMasterModal()" class="text-slate-400 hover:text-white p-2 rounded-lg bg-slate-800/50">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="masterForm" onsubmit="saveProvider(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Nome Fantasia / Provedor *</label>
+          <input type="text" id="provCompany" required placeholder="Ex: NetFibra Telecom" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 text-base">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Tipo de Serviço *</label>
+            <select id="provType" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 focus:outline-none focus:border-amber-500 text-sm">
+              <option value="telecom">Internet / Telecom (Megas)</option>
+              <option value="iptv">IPTV / Streaming</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Mensalidade Software (R$) *</label>
+            <input type="number" id="provFee" step="0.01" required placeholder="49.90" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 text-base">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Usuário Login *</label>
+            <input type="text" id="provUser" required placeholder="netfibra" autocapitalize="none" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 text-base">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Senha *</label>
+            <input type="text" id="provPass" required placeholder="123456" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 text-base">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Dia Vencimento *</label>
+            <input type="number" id="provDueDay" min="1" max="31" required placeholder="10" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 text-base">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">WhatsApp do Dono *</label>
+            <input type="tel" id="provPhone" required placeholder="11999999999" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 text-base">
+          </div>
+        </div>
+
+        <div class="pt-2">
+          <button type="submit" class="w-full touch-target bg-amber-500 hover:bg-amber-600 active:scale-[0.98] transition-all text-slate-950 font-bold rounded-xl text-base flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20">
+            <i data-lucide="check" class="w-5 h-5"></i> Criar Acesso
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL DO PROVEDOR: CADASTRO DE CLIENTE -->
+  <div id="clientModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-6 max-h-[92vh] overflow-y-auto space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+          <i data-lucide="user-plus" class="w-5 h-5 text-emerald-400"></i>
+          Adicionar Assinante
+        </h2>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white p-2 rounded-lg bg-slate-800/50">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="clientForm" onsubmit="saveClient(event)" class="space-y-3.5">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Nome do Cliente *</label>
+          <input type="text" id="clientName" required placeholder="Ex: João da Silva" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-base">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label id="planSelectLabel" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Plano *</label>
+            <select id="clientPlan" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 focus:outline-none focus:border-emerald-500 text-base">
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Valor (R$) *</label>
+            <input type="number" id="clientPrice" step="0.01" min="0" required placeholder="0.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-base">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Dia Vencimento *</label>
+            <input type="number" id="clientDueDay" min="1" max="31" required placeholder="Ex: 10" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-base">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Status Inicial *</label>
+            <select id="clientStatus" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 focus:outline-none focus:border-emerald-500 text-base">
+              <option value="pending">Pendente</option>
+              <option value="paid">Pago</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">WhatsApp (com DDD)</label>
+          <input type="tel" id="clientPhone" placeholder="Ex: 11987654321" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-base">
+        </div>
+
+        <div class="pt-3">
+          <button type="submit" class="w-full touch-target bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] transition-all text-slate-950 font-bold rounded-xl text-base flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
+            <i data-lucide="check" class="w-5 h-5"></i> Cadastrar Assinante
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // ⭐️ CONTAS GLOBAIS COM CLIENTES INICIAIS DE DEMONSTRAÇÃO
+    // =========================================================================
+    var GLOBAL_LICENSED_TENANTS = [
+      {
+        id: 'prov_henrique',
+        name: 'Provedor Henrique',
+        user: 'henrique',
+        pass: '12345678',
+        type: 'telecom',
+        fee: 49.90,
+        dueDay: 20,
+        phone: '11947988158',
+        status: 'active',
+        paidStatus: 'paid'
+      },
+      {
+        id: 'prov_demo',
+        name: 'Provedor Demonstração (Telecom)',
+        user: 'admin',
+        pass: '123456',
+        type: 'telecom',
+        fee: 59.90,
+        dueDay: 10,
+        phone: '11999999999',
+        status: 'active',
+        paidStatus: 'paid'
+      },
+      {
+        id: 'prov_fibra1',
+        name: 'Conecta Fibra Telecom',
+        user: 'fibra1',
+        pass: '123456',
+        type: 'telecom',
+        fee: 59.90,
+        dueDay: 10,
+        phone: '11999999999',
+        status: 'active',
+        paidStatus: 'paid'
+      },
+      {
+        id: 'prov_fibra2',
+        name: 'Veloz Net Telecom',
+        user: 'fibra2',
+        pass: '123456',
+        type: 'telecom',
+        fee: 59.90,
+        dueDay: 15,
+        phone: '11999999999',
+        status: 'active',
+        paidStatus: 'paid'
+      },
+      {
+        id: 'prov_fibra3',
+        name: 'Hyperlink Internet',
+        user: 'fibra3',
+        pass: '123456',
+        type: 'telecom',
+        fee: 59.90,
+        dueDay: 20,
+        phone: '11999999999',
+        status: 'active',
+        paidStatus: 'paid'
+      },
+      {
+        id: 'prov_fibra4',
+        name: 'MegaLink Provedor',
+        user: 'fibra4',
+        pass: '123456',
+        type: 'telecom',
+        fee: 59.90,
+        dueDay: 5,
+        phone: '11999999999',
+        status: 'active',
+        paidStatus: 'paid'
+      },
+      {
+        id: 'prov_iptv1',
+        name: 'CinePlay IPTV',
+        user: 'iptv1',
+        pass: '123456',
+        type: 'iptv',
+        fee: 49.90,
+        dueDay: 10,
+        phone: '11999999999',
+        status: 'active',
+        paidStatus: 'paid'
+      }
+    ];
+
+    // Limpeza de service workers antigos
+    try {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          for (var i = 0; i < regs.length; i++) {
+            regs[i].unregister();
+          }
+        })['catch'](function() {});
+      }
+      if ('caches' in window) {
+        caches.keys().then(function(names) {
+          for (var i = 0; i < names.length; i++) {
+            caches['delete'](names[i]);
+          }
+        })['catch'](function() {});
+      }
+    } catch(e) {}
+
+    var MASTER_SUPPORT_PHONE = "5511999999999"; 
+
+    var MASTER_CONFIG = {
+      username: "master",
+      password: "master@2026"
+    };
+
+    var MASTER_STORAGE_KEY = 'linkpay_master_tenants';
+    var MASTER_PIX_KEY = 'linkpay_master_pix_cfg';
+
+    var currentUser = null;
+    var currentRole = null;
+    var currentFilter = 'all';
+
+    try {
+      currentUser = localStorage.getItem('linkpay_logged_user') || null;
+      currentRole = localStorage.getItem('linkpay_logged_role') || null;
+      if (currentUser && !currentRole) {
+        currentRole = (currentUser.toLowerCase() === 'master') ? 'master' : 'tenant';
+        localStorage.setItem('linkpay_logged_role', currentRole);
+      }
+    } catch (e) {}
+
+    function safeCreateIcons() {
+      try {
+        if (window.lucide && typeof lucide.createIcons === 'function') {
+          lucide.createIcons();
+        }
+      } catch (e) {}
+    }
+
+    // NUNCA APAGA O BANCO DE DADOS (MASTER_STORAGE_KEY)
+    function forceCleanReset() {
+      if (confirm("Deseja desconectar a sessão deste aparelho?")) {
+        try {
+          localStorage.removeItem('linkpay_logged_user');
+          localStorage.removeItem('linkpay_logged_role');
+          localStorage.removeItem('linkpay_impersonating_by_master');
+          sessionStorage.clear();
+        } catch(e) {}
+        window.location.reload(true);
+      }
+    }
+
+    function getMasterTenants() {
+      var localData = [];
+      try {
+        var stored = localStorage.getItem(MASTER_STORAGE_KEY);
+        if (stored) localData = JSON.parse(stored);
+      } catch (e) {}
+
+      var mergedMap = {};
+      var i;
+
+      for (i = 0; i < GLOBAL_LICENSED_TENANTS.length; i++) {
+        var item = GLOBAL_LICENSED_TENANTS[i];
+        mergedMap[item.user.toLowerCase().trim()] = item;
+      }
+
+      if (Array.isArray(localData)) {
+        for (i = 0; i < localData.length; i++) {
+          var t = localData[i];
+          if (t && t.user) {
+            var key = t.user.toLowerCase().trim();
+            if (mergedMap[key]) {
+              var base = mergedMap[key];
+              for (var prop in t) {
+                if (t.hasOwnProperty(prop)) {
+                  base[prop] = t[prop];
+                }
+              }
+            } else {
+              mergedMap[key] = t;
+            }
+          }
+        }
+      }
+
+      var mergedList = [];
+      for (var k in mergedMap) {
+        if (mergedMap.hasOwnProperty(k)) {
+          mergedList.push(mergedMap[k]);
+        }
+      }
+
+      try {
+        localStorage.setItem(MASTER_STORAGE_KEY, JSON.stringify(mergedList));
+      } catch(e) {}
+
+      return mergedList;
+    }
+
+    function getCurrentTenantConfig() {
+      if (currentRole !== 'tenant' || !currentUser) return null;
+      var tenants = getMasterTenants();
+      for (var i = 0; i < tenants.length; i++) {
+        if (tenants[i].user.toLowerCase() === currentUser.toLowerCase()) {
+          return tenants[i];
+        }
+      }
+      return { type: 'telecom', name: 'LinkPay' };
+    }
+
+    function saveMasterTenants(tenants) {
+      try {
+        localStorage.setItem(MASTER_STORAGE_KEY, JSON.stringify(tenants));
+      } catch(e) {}
+    }
+
+    function getStorageKey() {
+      return 'linkpay_clients_db_' + (currentUser || 'default');
+    }
+
+    function getPixConfigKey() {
+      return 'linkpay_pix_cfg_' + (currentUser || 'default');
+    }
+
+    function recoverPasswordSupport() {
+      var userInput = (document.getElementById('loginUser').value || '').trim();
+      var msg = "Olá suporte do LinkPay Pro! Esqueci minha senha de acesso.";
+      if (userInput) {
+        msg += " Meu usuário cadastrado é: *" + userInput + "*.";
+      }
+      msg += " Pode me ajudar a redefinir meu acesso?";
+      window.open("https://wa.me/" + MASTER_SUPPORT_PHONE + "?text=" + encodeURIComponent(msg), '_blank');
+    }
+
+    function checkAutoMonthlyReset() {
+      if (!currentUser || currentRole !== 'tenant') return;
+
+      var currentCycle = getCurrentCycleKey();
+      var lastCycle = null;
+      try {
+        lastCycle = localStorage.getItem('linkpay_last_cycle_' + currentUser);
+      } catch(e) {}
+
+      if (lastCycle && lastCycle !== currentCycle) {
+        var clients = getStoredClients();
+        for (var i = 0; i < clients.length; i++) {
+          clients[i].status = 'pending';
+        }
+        saveStoredClients(clients);
+      }
+
+      try {
+        localStorage.setItem('linkpay_last_cycle_' + currentUser, currentCycle);
+      } catch(e) {}
+    }
+
+    function resetMonthlyCycle(manual) {
+      var cycleName = getCurrentCycleName();
+      if (!manual || confirm("Iniciar cobranças de " + cycleName + "? Todos os clientes voltarão para status pendente neste mês.")) {
+        var clients = getStoredClients();
+        for (var i = 0; i < clients.length; i++) {
+          clients[i].status = 'pending';
+        }
+        saveStoredClients(clients);
+        try {
+          localStorage.setItem('linkpay_last_cycle_' + currentUser, getCurrentCycleKey());
+        } catch(e) {}
+        renderClients();
+      }
+    }
+
+    function checkAuth() {
+      var loginScreen = document.getElementById('loginScreen');
+      var masterContainer = document.getElementById('masterContainer');
+      var appContainer = document.getElementById('appContainer');
+      var impBar = document.getElementById('masterImpersonationBar');
+
+      loginScreen.classList.add('hidden');
+      masterContainer.classList.add('hidden');
+      appContainer.classList.add('hidden');
+      impBar.classList.add('hidden');
+
+      var isImpersonating = false;
+      try {
+        isImpersonating = localStorage.getItem('linkpay_impersonating_by_master') === 'true';
+      } catch(e) {}
+
+      if (currentRole === 'master') {
+        masterContainer.classList.remove('hidden');
+        renderMasterPanel();
+      } else if (currentRole === 'tenant' && currentUser) {
+        appContainer.classList.remove('hidden');
+        if (isImpersonating) {
+          impBar.classList.remove('hidden');
+          document.getElementById('impersonationUserName').textContent = currentUser;
+        }
+        checkAutoMonthlyReset();
+        setupTenantInterface();
+        renderClients();
+      } else {
+        loginScreen.classList.remove('hidden');
+      }
+      safeCreateIcons();
+    }
+
+    function setupTenantInterface() {
+      var tenant = getCurrentTenantConfig();
+      var iconEl = document.getElementById('userCategoryIcon');
+      var brandEl = document.getElementById('tenantPanelBrand');
+
+      if (tenant) {
+        if (brandEl) brandEl.textContent = tenant.name || 'LinkPay';
+        if (iconEl) {
+          if (tenant.type === 'iptv') {
+            iconEl.innerHTML = '<i data-lucide="tv" class="w-6 h-6"></i>';
+          } else {
+            iconEl.innerHTML = '<i data-lucide="wifi" class="w-6 h-6"></i>';
+          }
+        }
+      }
+      safeCreateIcons();
+    }
+
+    function handleLogin(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      var user = (document.getElementById('loginUser').value || '').trim().toLowerCase();
+      var pass = (document.getElementById('loginPass').value || '').trim();
+      var errorEl = document.getElementById('loginError');
+      errorEl.classList.add('hidden');
+
+      // 1. Verificação Master
+      if (user === MASTER_CONFIG.username.toLowerCase() && pass === MASTER_CONFIG.password) {
+        currentUser = "master";
+        currentRole = "master";
+        try {
+          localStorage.setItem('linkpay_logged_user', "master");
+          localStorage.setItem('linkpay_logged_role', "master");
+          localStorage.removeItem('linkpay_impersonating_by_master');
+        } catch(err) {}
+        checkAuth();
+        return;
+      }
+
+      // 2. Verificação Provedor (Tenants)
+      var tenants = getMasterTenants();
+      var tenant = null;
+      for (var i = 0; i < tenants.length; i++) {
+        if (tenants[i].user.toLowerCase().trim() === user && tenants[i].pass === pass) {
+          tenant = tenants[i];
+          break;
+        }
+      }
+
+      if (tenant) {
+        if (tenant.status === 'blocked') {
+          errorEl.textContent = "Acesso temporariamente bloqueado. Entre em contato com o suporte.";
+          errorEl.classList.remove('hidden');
+          return;
+        }
+        currentUser = tenant.user;
+        currentRole = "tenant";
+        try {
+          localStorage.setItem('linkpay_logged_user', tenant.user);
+          localStorage.setItem('linkpay_logged_role', "tenant");
+          localStorage.removeItem('linkpay_impersonating_by_master');
+        } catch(err) {}
+        checkAuth();
+      } else {
+        errorEl.textContent = "Usuário ou senha incorretos.";
+        errorEl.classList.remove('hidden');
+      }
+    }
+
+    function enterAsTenant(username) {
+      currentUser = username;
+      currentRole = "tenant";
+      try {
+        localStorage.setItem('linkpay_logged_user', username);
+        localStorage.setItem('linkpay_logged_role', "tenant");
+        localStorage.setItem('linkpay_impersonating_by_master', 'true');
+      } catch(e) {}
+      checkAuth();
+    }
+
+    function returnToMasterPanel() {
+      currentUser = "master";
+      currentRole = "master";
+      try {
+        localStorage.setItem('linkpay_logged_user', "master");
+        localStorage.setItem('linkpay_logged_role', "master");
+        localStorage.removeItem('linkpay_impersonating_by_master');
+      } catch(e) {}
+      checkAuth();
+    }
+
+    function handleLogout() {
+      if (confirm("Deseja encerrar a sessão?")) {
+        try {
+          localStorage.removeItem('linkpay_logged_user');
+          localStorage.removeItem('linkpay_logged_role');
+          localStorage.removeItem('linkpay_impersonating_by_master');
+        } catch(e) {}
+        currentUser = null;
+        currentRole = null;
+        checkAuth();
+      }
+    }
+
+    function openMasterPixModal() {
+      var cfg = {};
+      try {
+        cfg = JSON.parse(localStorage.getItem(MASTER_PIX_KEY) || '{}');
+      } catch(e) {}
+      document.getElementById('masterPixKey').value = cfg.key || '';
+      document.getElementById('masterPixHolder').value = cfg.holder || '';
+      document.getElementById('masterPixModal').classList.remove('hidden');
+      safeCreateIcons();
+    }
+
+    function closeMasterPixModal() {
+      document.getElementById('masterPixModal').classList.add('hidden');
+    }
+
+    function saveMasterPixConfig() {
+      var cfg = {
+        key: document.getElementById('masterPixKey').value.trim(),
+        holder: document.getElementById('masterPixHolder').value.trim()
+      };
+      try {
+        localStorage.setItem(MASTER_PIX_KEY, JSON.stringify(cfg));
+      } catch(e) {}
+      alert("Seu PIX Master foi salvo com sucesso!");
+      closeMasterPixModal();
+      renderMasterPanel();
+    }
+
+    function openConfigModal() {
+      var cfg = {};
+      try {
+        cfg = JSON.parse(localStorage.getItem(getPixConfigKey()) || '{}');
+      } catch(e) {}
+      document.getElementById('cfgPixKey').value = cfg.key || '';
+      document.getElementById('cfgPixHolder').value = cfg.holder || '';
+      document.getElementById('cfgNewPassword').value = '';
+      document.getElementById('configModal').classList.remove('hidden');
+      safeCreateIcons();
+    }
+
+    function closeConfigModal() {
+      document.getElementById('configModal').classList.add('hidden');
+    }
+
+    function savePixConfig() {
+      var cfg = {
+        key: document.getElementById('cfgPixKey').value.trim(),
+        holder: document.getElementById('cfgPixHolder').value.trim()
+      };
+      try {
+        localStorage.setItem(getPixConfigKey(), JSON.stringify(cfg));
+      } catch(e) {}
+      alert("Chave PIX salva!");
+      closeConfigModal();
+    }
+
+    function changeTenantOwnPassword() {
+      var newPass = document.getElementById('cfgNewPassword').value.trim();
+      if (!newPass || newPass.length < 4) {
+        alert("A senha deve ter no mínimo 4 dígitos.");
+        return;
+      }
+
+      var tenants = getMasterTenants();
+      for (var i = 0; i < tenants.length; i++) {
+        if (tenants[i].user.toLowerCase() === currentUser.toLowerCase()) {
+          tenants[i].pass = newPass;
+          saveMasterTenants(tenants);
+          alert("Senha atualizada com sucesso!");
+          closeConfigModal();
+          return;
+        }
+      }
+    }
+
+    function openMasterEditModal(id) {
+      var tenants = getMasterTenants();
+      for (var i = 0; i < tenants.length; i++) {
+        if (tenants[i].id === id) {
+          var t = tenants[i];
+          document.getElementById('editTenantId').value = t.id;
+          document.getElementById('editTenantName').textContent = t.name + ' (@' + t.user + ')';
+          document.getElementById('editTenantPass').value = t.pass;
+          document.getElementById('masterEditModal').classList.remove('hidden');
+          safeCreateIcons();
+          return;
+        }
+      }
+    }
+
+    function closeMasterEditModal() {
+      document.getElementById('masterEditModal').classList.add('hidden');
+    }
+
+    function saveTenantNewPass() {
+      var id = document.getElementById('editTenantId').value;
+      var newPass = document.getElementById('editTenantPass').value.trim();
+
+      if (!newPass) {
+        alert("A senha não pode ser vazia.");
+        return;
+      }
+
+      var tenants = getMasterTenants();
+      for (var i = 0; i < tenants.length; i++) {
+        if (tenants[i].id === id) {
+          tenants[i].pass = newPass;
+          saveMasterTenants(tenants);
+          alert("Senha do provedor " + tenants[i].name + " alterada!");
+          closeMasterEditModal();
+          renderMasterPanel();
+          return;
+        }
+      }
+    }
+
+    function exportBackupData() {
+      var clients = getStoredClients();
+      var cfg = {};
+      try {
+        cfg = JSON.parse(localStorage.getItem(getPixConfigKey()) || '{}');
+      } catch(e) {}
+
+      var backupObject = {
+        exportedAt: new Date().toISOString(),
+        user: currentUser,
+        config: cfg,
+        clients: clients
+      };
+
+      var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupObject, null, 2));
+      var downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "linkpay_backup_" + currentUser + "_" + new Date().toISOString().slice(0, 10) + ".json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function importBackupData(e) {
+      var file = e.target.files[0];
+      if (!file) return;
+
+      var reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          var imported = JSON.parse(evt.target.result);
+          if (Array.isArray(imported.clients)) {
+            if (confirm("Restaurar backup com " + imported.clients.length + " clientes?")) {
+              saveStoredClients(imported.clients);
+              if (imported.config) {
+                try {
+                  localStorage.setItem(getPixConfigKey(), JSON.stringify(imported.config));
+                } catch(err) {}
+              }
+              alert("Backup importado com sucesso!");
+              closeConfigModal();
+              renderClients();
+            }
+          } else {
+            alert("Arquivo de backup inválido.");
+          }
+        } catch(err) {
+          alert("Erro ao ler o arquivo.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function openMasterModal() {
+      document.getElementById('masterForm').reset();
+      document.getElementById('masterModal').classList.remove('hidden');
+      safeCreateIcons();
+    }
+
+    function closeMasterModal() {
+      document.getElementById('masterModal').classList.add('hidden');
+    }
+
+    function saveProvider(e) {
+      e.preventDefault();
+      var tenants = getMasterTenants();
+      var user = document.getElementById('provUser').value.trim().toLowerCase();
+
+      for (var i = 0; i < tenants.length; i++) {
+        if (tenants[i].user.toLowerCase() === user || user === 'master') {
+          alert("Este usuário já está em uso.");
+          return;
+        }
+      }
+
+      var newTenant = {
+        id: 'prov_' + Date.now(),
+        name: document.getElementById('provCompany').value.trim(),
+        user: user,
+        pass: document.getElementById('provPass').value.trim(),
+        type: document.getElementById('provType').value,
+        fee: parseFloat(document.getElementById('provFee').value),
+        dueDay: parseInt(document.getElementById('provDueDay').value, 10),
+        phone: document.getElementById('provPhone').value.replace(/\D/g, ''),
+        status: 'active',
+        paidStatus: 'pending'
+      };
+
+      tenants.push(newTenant);
+      saveMasterTenants(tenants);
+      closeMasterModal();
+      renderMasterPanel();
+    }
+
+    function toggleProviderStatus(id) {
+      var tenants = getMasterTenants();
+      for (var i = 0; i < tenants.length; i++) {
+        if (tenants[i].id === id) {
+          tenants[i].status = tenants[i].status === 'active' ? 'blocked' : 'active';
+          saveMasterTenants(tenants);
+          renderMasterPanel();
+          return;
+        }
+      }
+    }
+
+    function toggleProviderPaid(id) {
+      var tenants = getMasterTenants();
+      for (var i = 0; i < tenants.length; i++) {
+        if (tenants[i].id === id) {
+          tenants[i].paidStatus = tenants[i].paidStatus === 'paid' ? 'pending' : 'paid';
+          saveMasterTenants(tenants);
+          renderMasterPanel();
+          return;
+        }
+      }
+    }
+
+    function chargeProviderWhatsApp(name, fee, dueDay, phone) {
+      var formattedFee = fee.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      var currentMonth = new Date().toLocaleDateString('pt-BR', { month: 'long' });
+      var masterPix = {};
+      try {
+        masterPix = JSON.parse(localStorage.getItem(MASTER_PIX_KEY) || '{}');
+      } catch(e) {}
+
+      var message = "Olá " + name + ", segue o lembrete da mensalidade do seu sistema LinkPay Pro referente ao mês de " + currentMonth + ". Valor da licença: R$ " + formattedFee + ", com vencimento no dia " + dueDay + ".";
+
+      if (masterPix.key) {
+        message += "\n\n📌 Pagamento via PIX:\nChave: " + masterPix.key;
+        if (masterPix.holder) message += "\nTitular: " + masterPix.holder;
+      }
+
+      window.open("https://wa.me/" + phone + "?text=" + encodeURIComponent(message), '_blank');
+    }
+
+    function deleteProvider(id) {
+      if (confirm("Remover este provedor do sistema?")) {
+        var tenants = getMasterTenants();
+        var updated = [];
+        for (var i = 0; i < tenants.length; i++) {
+          if (tenants[i].id !== id) {
+            updated.push(tenants[i]);
+          }
+        }
+        saveMasterTenants(updated);
+        renderMasterPanel();
+      }
+    }
+
+    function renderMasterPanel() {
+      var tenants = getMasterTenants();
+      var activeTenants = [];
+      var paidRevenue = 0;
+      var pendingRevenue = 0;
+      var totalPotential = 0;
+
+      for (var i = 0; i < tenants.length; i++) {
+        var t = tenants[i];
+        if (t.status === 'active') {
+          activeTenants.push(t);
+          totalPotential += t.fee;
+          if (t.paidStatus === 'paid') {
+            paidRevenue += t.fee;
+          } else {
+            pendingRevenue += t.fee;
+          }
+        }
+      }
+
+      document.getElementById('masterTotalTenants').textContent = activeTenants.length;
+      document.getElementById('masterPaidRevenue').textContent = paidRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      document.getElementById('masterPendingRevenue').textContent = pendingRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      document.getElementById('masterMonthlyTotal').textContent = totalPotential.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+      var masterPix = {};
+      try {
+        masterPix = JSON.parse(localStorage.getItem(MASTER_PIX_KEY) || '{}');
+      } catch(e) {}
+      
+      var pixAlert = document.getElementById('masterPixAlert');
+      if (!masterPix.key) {
+        pixAlert.classList.remove('hidden');
+      } else {
+        pixAlert.classList.add('hidden');
+      }
+
+      var container = document.getElementById('masterTenantsList');
+      container.innerHTML = '';
+
+      for (var j = 0; j < tenants.length; j++) {
+        var item = tenants[j];
+        var isPaid = item.paidStatus === 'paid';
+        var isBlocked = item.status === 'blocked';
+        var formattedFee = item.fee.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        var typeBadge = item.type === 'iptv' ? '<span class="px-2 py-0.5 text-[10px] font-bold bg-purple-500/20 text-purple-400 rounded-md border border-purple-500/30">IPTV</span>' : '<span class="px-2 py-0.5 text-[10px] font-bold bg-blue-500/20 text-blue-400 rounded-md border border-blue-500/30">Telecom</span>';
+
+        var card = document.createElement('div');
+        card.className = 'bg-slate-900 border ' + (isBlocked ? 'border-rose-900/50 opacity-60' : isPaid ? 'border-emerald-500/30' : 'border-slate-800') + ' rounded-2xl p-4 space-y-3';
+
+        card.innerHTML = 
+          '<div class="flex items-start justify-between gap-2">' +
+            '<div>' +
+              '<div class="flex items-center gap-2">' +
+                '<h3 class="font-bold text-base text-white">' + item.name + '</h3>' +
+                typeBadge +
+                (isBlocked ? '<span class="px-2 py-0.5 text-[10px] font-bold bg-rose-500/20 text-rose-400 rounded-md">Bloqueado</span>' : '<span class="px-2 py-0.5 text-[10px] font-bold bg-emerald-500/20 text-emerald-400 rounded-md">Ativo</span>') +
+              '</div>' +
+              '<p class="text-xs text-slate-400 font-mono mt-0.5">Usuário: <strong class="text-slate-200">' + item.user + '</strong> • Senha: <span class="text-amber-400 font-semibold">' + item.pass + '</span></p>' +
+            '</div>' +
+            '<div class="flex items-center gap-1">' +
+              '<button onclick="openMasterEditModal(\'' + item.id + '\')" class="text-slate-400 hover:text-amber-400 p-1" title="Redefinir Senha">' +
+                '<i data-lucide="key" class="w-4 h-4"></i>' +
+              '</button>' +
+              '<button onclick="deleteProvider(\'' + item.id + '\')" class="text-slate-500 hover:text-rose-400 p-1" title="Excluir">' +
+                '<i data-lucide="trash-2" class="w-4 h-4"></i>' +
+              '</button>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="flex items-center justify-between border-t border-slate-800/80 pt-2.5 text-xs">' +
+            '<span class="text-slate-400">Mensalidade: <strong class="text-white">R$ ' + formattedFee + '</strong> (Dia ' + item.dueDay + ')</span>' +
+            '<button onclick="chargeProviderWhatsApp(\'' + item.name + '\', ' + item.fee + ', ' + item.dueDay + ', \'' + item.phone + '\')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-semibold">' +
+              '<i data-lucide="message-circle" class="w-3.5 h-3.5"></i> Cobrar Licença' +
+            '</button>' +
+          '</div>' +
+
+          '<div class="grid grid-cols-3 gap-1.5 pt-1">' +
+            '<button onclick="enterAsTenant(\'' + item.user + '\')" class="touch-target rounded-xl font-bold text-xs bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 flex items-center justify-center gap-1">' +
+              '<i data-lucide="external-link" class="w-3.5 h-3.5"></i> Ver Painel' +
+            '</button>' +
+            '<button onclick="toggleProviderPaid(\'' + item.id + '\')" class="touch-target rounded-xl font-bold text-xs uppercase flex items-center justify-center gap-1 ' + (isPaid ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white') + '">' +
+              (isPaid ? 'Pago' : 'Pendente') +
+            '</button>' +
+            '<button onclick="toggleProviderStatus(\'' + item.id + '\')" class="touch-target rounded-xl font-bold text-xs uppercase flex items-center justify-center gap-1 ' + (isBlocked ? 'bg-slate-700 text-emerald-400' : 'bg-slate-800 text-rose-400 border border-slate-700') + '">' +
+              (isBlocked ? 'Ativar' : 'Bloquear') +
+            '</button>' +
+          '</div>';
+
+        container.appendChild(card);
+      }
+      safeCreateIcons();
+    }
+
+    function getCurrentCycleKey() {
+      var now = new Date();
+      var month = now.getMonth() + 1;
+      return now.getFullYear() + '-' + (month < 10 ? '0' + month : month);
+    }
+
+    function getCurrentCycleName() {
+      return new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    }
+
+    function getStoredClients() {
+      try {
+        var data = localStorage.getItem(getStorageKey());
+        return data ? JSON.parse(data) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveStoredClients(clients) {
+      try {
+        localStorage.setItem(getStorageKey(), JSON.stringify(clients));
+      } catch(e) {}
+    }
+
+    function openModal() {
+      document.getElementById('clientForm').reset();
+      var tenant = getCurrentTenantConfig();
+      var planSelect = document.getElementById('clientPlan');
+      var planLabel = document.getElementById('planSelectLabel');
+
+      planSelect.innerHTML = '';
+
+      if (tenant && tenant.type === 'iptv') {
+        planLabel.textContent = "Plano IPTV *";
+        var iptvPlans = ["1 Tela (Mensal)", "2 Telas (Mensal)", "3 Telas (Mensal)", "Trimestral (1 Tela)", "Semestral", "Anual"];
+        for (var i = 0; i < iptvPlans.length; i++) {
+          var opt = document.createElement('option');
+          opt.value = iptvPlans[i];
+          opt.textContent = iptvPlans[i];
+          planSelect.appendChild(opt);
+        }
+      } else {
+        planLabel.textContent = "Velocidade Fibra *";
+        var telecomPlans = ["100 Mega", "200 Mega", "300 Mega", "400 Mega", "500 Mega", "600 Mega"];
+        for (var j = 0; j < telecomPlans.length; j++) {
+          var optEl = document.createElement('option');
+          optEl.value = telecomPlans[j];
+          optEl.textContent = telecomPlans[j];
+          if (j === 2) optEl.selected = true;
+          planSelect.appendChild(optEl);
+        }
+      }
+
+      document.getElementById('clientModal').classList.remove('hidden');
+      safeCreateIcons();
+    }
+
+    function closeModal() {
+      document.getElementById('clientModal').classList.add('hidden');
+    }
+
+    function saveClient(e) {
+      e.preventDefault();
+      var newClient = {
+        id: 'client_' + Date.now(),
+        name: document.getElementById('clientName').value.trim(),
+        plan: document.getElementById('clientPlan').value,
+        price: parseFloat(document.getElementById('clientPrice').value),
+        dueDay: parseInt(document.getElementById('clientDueDay').value, 10),
+        phone: document.getElementById('clientPhone').value.replace(/\D/g, ''),
+        status: document.getElementById('clientStatus').value
+      };
+
+      var clients = getStoredClients();
+      clients.unshift(newClient);
+      saveStoredClients(clients);
+      closeModal();
+      renderClients();
+    }
+
+    function toggleStatus(id) {
+      var clients = getStoredClients();
+      for (var i = 0; i < clients.length; i++) {
+        if (clients[i].id === id) {
+          clients[i].status = clients[i].status === 'paid' ? 'pending' : 'paid';
+          saveStoredClients(clients);
+          renderClients();
+          return;
+        }
+      }
+    }
+
+    function deleteClient(id) {
+      if (confirm("Deseja remover este cliente?")) {
+        var clients = getStoredClients();
+        var updated = [];
+        for (var i = 0; i < clients.length; i++) {
+          if (clients[i].id !== id) {
+            updated.push(clients[i]);
+          }
+        }
+        saveStoredClients(updated);
+        renderClients();
+      }
+    }
+
+    function openWhatsApp(name, plan, price, dueDay, phone) {
+      if (!phone) {
+        alert("Nenhum WhatsApp cadastrado.");
+        return;
+      }
+      var formattedPrice = price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      var currentMonth = new Date().toLocaleDateString('pt-BR', { month: 'long' });
+      var todayDay = new Date().getDate();
+      var cfgPix = {};
+      try {
+        cfgPix = JSON.parse(localStorage.getItem(getPixConfigKey()) || '{}');
+      } catch(e) {}
+
+      var message = "";
+      if (dueDay === todayDay + 2) {
+        message = "Olá " + name + "! Passando para lembrar que sua mensalidade referente ao mês de " + currentMonth + " vence em 2 dias (Dia " + dueDay + "). Valor: R$ " + formattedPrice + ".";
+      } else if (dueDay === todayDay) {
+        message = "Olá " + name + "! Sua mensalidade vence hoje (Dia " + dueDay + "). Valor: R$ " + formattedPrice + ".";
+      } else if (todayDay > dueDay) {
+        message = "Olá " + name + ", notamos que sua mensalidade referente a " + currentMonth + " (vencimento dia " + dueDay + ") ainda consta em aberto. Valor: R$ " + formattedPrice + ".";
+      } else {
+        message = "Olá " + name + ", segue o lembrete da sua mensalidade referente ao mês de " + currentMonth + ". Valor: R$ " + formattedPrice + ", com vencimento no dia " + dueDay + ".";
+      }
+      
+      if (cfgPix.key) {
+        message += "\n\n📌 Pagamento via PIX:\nChave: " + cfgPix.key;
+        if (cfgPix.holder) message += "\nTitular: " + cfgPix.holder;
+      }
+
+      window.open("https://wa.me/55" + phone + "?text=" + encodeURIComponent(message), '_blank');
+    }
+
+    function sendReceiptWhatsApp(name, plan, price, phone) {
+      if (!phone) {
+        alert("Nenhum WhatsApp cadastrado.");
+        return;
+      }
+      var formattedPrice = price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      var currentMonth = new Date().toLocaleDateString('pt-BR', { month: 'long' });
+      var message = "Olá " + name + "! ✅ Confirmamos o recebimento da sua mensalidade referente ao mês de " + currentMonth + " no valor de R$ " + formattedPrice + ". Muito obrigado por sua parceria!";
+      window.open("https://wa.me/55" + phone + "?text=" + encodeURIComponent(message), '_blank');
+    }
+
+    function setFilter(filter) {
+      currentFilter = filter;
+      var buttons = { 
+        all: document.getElementById('filterAll'), 
+        in2days: document.getElementById('filterIn2Days'),
+        today: document.getElementById('filterToday'),
+        pending: document.getElementById('filterPending'), 
+        paid: document.getElementById('filterPaid') 
+      };
+
+      for (var key in buttons) {
+        if (buttons.hasOwnProperty(key)) {
+          if (key === filter) {
+            buttons[key].className = 'touch-target text-[11px] font-bold rounded-lg py-2 transition-all text-white bg-slate-800 shadow-sm';
+          } else {
+            buttons[key].className = 'touch-target text-[11px] font-semibold rounded-lg py-2 transition-all text-slate-400 hover:text-slate-200 bg-transparent';
+          }
+        }
+      }
+      renderClients();
+    }
+
+    function renderClients() {
+      if (currentRole !== 'tenant') return;
+      var clients = getStoredClients();
+      var searchQuery = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+      var todayDay = new Date().getDate();
+
+      var moneyPaid = 0;
+      var moneyPending = 0;
+      var countPaid = 0;
+      var countPending = 0;
+
+      for (var i = 0; i < clients.length; i++) {
+        var c = clients[i];
+        if (c.status === 'paid') {
+          moneyPaid += c.price;
+          countPaid++;
+        } else {
+          moneyPending += c.price;
+          countPending++;
+        }
+      }
+
+      var moneyTotal = moneyPaid + moneyPending;
+      var rate = moneyTotal > 0 ? Math.round((moneyPaid / moneyTotal) * 100) : 0;
+
+      document.getElementById('statMoneyPaid').textContent = moneyPaid.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      document.getElementById('statMoneyPending').textContent = moneyPending.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      document.getElementById('statMoneyTotal').textContent = moneyTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      document.getElementById('statCollectionRate').textContent = rate + '% Recebido';
+
+      document.getElementById('counterTotal').textContent = clients.length;
+      document.getElementById('counterPaid').textContent = countPaid;
+      document.getElementById('counterPending').textContent = countPending;
+
+      var filtered = [];
+      for (var j = 0; j < clients.length; j++) {
+        var item = clients[j];
+        if (searchQuery && item.name.toLowerCase().indexOf(searchQuery) === -1) continue;
+        if (currentFilter === 'paid' && item.status !== 'paid') continue;
+        if (currentFilter === 'pending' && (item.status === 'paid' || todayDay <= item.dueDay)) continue;
+        if (currentFilter === 'today' && (item.status === 'paid' || item.dueDay !== todayDay)) continue;
+        if (currentFilter === 'in2days' && (item.status === 'paid' || item.dueDay !== (todayDay + 2))) continue;
+        filtered.push(item);
+      }
+
+      var container = document.getElementById('clientsList');
+      var emptyState = document.getElementById('emptyState');
+      container.innerHTML = '';
+
+      if (filtered.length === 0) emptyState.classList.remove('hidden');
+      else emptyState.classList.add('hidden');
+
+      for (var k = 0; k < filtered.length; k++) {
+        var client = filtered[k];
+        var isPaid = client.status === 'paid';
+        var isToday = !isPaid && client.dueDay === todayDay;
+        var isIn2Days = !isPaid && client.dueDay === (todayDay + 2);
+        var isLate = !isPaid && todayDay > client.dueDay;
+        var formattedPrice = client.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        var card = document.createElement('div');
+        card.className = 'bg-slate-900 border ' + (isPaid ? 'border-slate-800/80' : isToday ? 'border-amber-500/60' : isIn2Days ? 'border-cyan-500/60' : isLate ? 'border-rose-500/60' : 'border-slate-800') + ' rounded-2xl p-4 transition-all shadow-md space-y-3';
+
+        card.innerHTML = 
+          '<div class="flex items-start justify-between gap-2">' +
+            '<div class="space-y-1 pr-2">' +
+              '<div class="flex items-center gap-2">' +
+                '<h3 class="font-bold text-base text-white line-clamp-1">' + client.name + '</h3>' +
+                (isIn2Days ? '<span class="px-2 py-0.5 text-[10px] font-extrabold bg-cyan-500/20 text-cyan-400 rounded-md border border-cyan-500/30">Em 2 Dias</span>' : '') +
+                (isToday ? '<span class="px-2 py-0.5 text-[10px] font-extrabold bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/30">Vence Hoje</span>' : '') +
+                (isLate ? '<span class="px-2 py-0.5 text-[10px] font-extrabold bg-rose-500/20 text-rose-400 rounded-md border border-rose-500/30">Atrasado</span>' : '') +
+              '</div>' +
+              '<p class="text-xs text-slate-400 font-medium">' + client.plan + ' • <span class="text-slate-200 font-semibold">R$ ' + formattedPrice + '</span></p>' +
+            '</div>' +
+            '<button onclick="deleteClient(\'' + client.id + '\')" class="text-slate-500 hover:text-rose-400 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>' +
+          '</div>' +
+          '<div class="flex items-center justify-between border-t border-slate-800/60 pt-2.5 text-xs">' +
+            '<span class="' + (isIn2Days ? 'text-cyan-400 font-bold' : isToday ? 'text-amber-400 font-bold' : isLate ? 'text-rose-400 font-semibold' : 'text-slate-300') + '">' +
+              'Vence todo: <strong class="text-white font-bold">Dia ' + client.dueDay + '</strong>' +
+            '</span>' +
+            '<div class="flex items-center gap-1.5">' +
+              (isPaid && client.phone ? 
+                '<button onclick="sendReceiptWhatsApp(\'' + client.name + '\', \'' + client.plan + '\', ' + client.price + ', \'' + client.phone + '\')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold text-[11px]">' +
+                  '<i data-lucide="receipt" class="w-3.5 h-3.5"></i> Recibo' +
+                '</button>' : '') +
+              (!isPaid && client.phone ? 
+                '<button onclick="openWhatsApp(\'' + client.name + '\', \'' + client.plan + '\', ' + client.price + ', ' + client.dueDay + ', \'' + client.phone + '\')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg ' + (isIn2Days ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20') + ' font-semibold text-[11px]">' +
+                  '<i data-lucide="message-circle" class="w-3.5 h-3.5"></i> ' + (isIn2Days ? 'Lembrar 2 Dias' : 'Cobrar PIX') +
+                '</button>' : '') +
+            '</div>' +
+          '</div>' +
+          '<button onclick="toggleStatus(\'' + client.id + '\')" class="w-full touch-target rounded-xl font-black text-sm tracking-wider uppercase flex items-center justify-center gap-2 ' + (isPaid ? 'bg-emerald-600 text-white' : isToday ? 'bg-amber-600 text-white' : isIn2Days ? 'bg-cyan-700 text-white' : isLate ? 'bg-rose-600 text-white animate-pulse' : 'bg-slate-800 text-slate-300 border border-slate-700') + '">' +
+            '<i data-lucide="' + (isPaid ? 'check-circle-2' : isToday ? 'clock' : isIn2Days ? 'bell' : 'alert-circle') + '"></i>' +
+            (isPaid ? 'PAGO' : isToday ? 'VENCE HOJE' : isIn2Days ? 'VENCE EM 2 DIAS' : isLate ? 'VENCIDO' : 'A VENCER') +
+          '</button>';
+
+        container.appendChild(card);
+      }
+      safeCreateIcons();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      var monthName = getCurrentCycleName();
+      document.getElementById('activeMonthDisplay').textContent = monthName;
+      document.getElementById('currentCycleLabel').textContent = 'Ciclo: ' + monthName;
+      checkAuth();
+      setFilter('all');
+    });
+  </script>
+</body>
+</html>
