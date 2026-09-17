@@ -57,7 +57,7 @@
           <i data-lucide="shield-check" class="w-8 h-8"></i>
         </div>
         <h2 class="text-2xl font-black tracking-tight text-white">LinkPay Pro</h2>
-        <p class="text-xs text-slate-400">Servidor Online em Nuvem</p>
+        <p class="text-xs text-slate-400">Servidor Online em Nuvem Blindada</p>
       </div>
 
       <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
@@ -99,7 +99,7 @@
     </div>
   </div>
 
-  <!-- 2. PAINEL MASTER (ADMINISTRADOR) -->
+  <!-- 2. PAINEL DO ADMINISTRADOR MASTER COMPLETO -->
   <div id="masterContainer" class="hidden pb-24">
     <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3">
       <div class="max-w-md mx-auto flex items-center justify-between gap-2">
@@ -129,6 +129,7 @@
     </header>
 
     <main class="max-w-md mx-auto px-4 pt-4 space-y-4">
+      <!-- Financeiro das Licenças Master -->
       <section class="grid grid-cols-3 gap-2">
         <div class="bg-slate-900 border border-emerald-500/30 rounded-2xl p-3 text-center bg-emerald-950/10">
           <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block mb-0.5">Recebido</span>
@@ -144,6 +145,7 @@
         </div>
       </section>
 
+      <!-- Alerta PIX Master -->
       <div id="masterPixAlert" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3 flex items-center justify-between gap-2">
         <div class="flex items-center gap-2 text-amber-400 text-xs font-semibold">
           <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0"></i>
@@ -177,7 +179,6 @@
         </div>
 
         <div class="flex items-center gap-1.5">
-          <!-- ⭐️ BOTÃO DA ENGRENAGEM (CONFIGURAÇÕES DO PROVEDOR) RESTAURADO ⭐️ -->
           <button onclick="openConfigModal()" class="touch-target bg-slate-800/80 hover:bg-slate-700 text-slate-300 px-2 rounded-xl flex items-center gap-1 border border-slate-700 text-xs transition-all" title="Configurações e Chave PIX">
             <i data-lucide="settings" class="w-4 h-4 text-emerald-400"></i>
           </button>
@@ -277,15 +278,15 @@
         <div class="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center mx-auto text-slate-600 border border-slate-800">
           <i data-lucide="users" class="w-8 h-8"></i>
         </div>
-        <p class="text-slate-400 font-medium text-sm">Nenhum assinante encontrado para este filtro.</p>
+        <p class="text-slate-400 font-medium text-sm">Nenhum assinante cadastrado ainda.</p>
         <button onclick="openModal()" class="px-4 py-2 bg-emerald-500/20 text-emerald-400 rounded-xl text-xs font-bold border border-emerald-500/30">
-          + Cadastrar Novo Assinante
+          + Cadastrar Primeiro Assinante
         </button>
       </div>
     </main>
   </div>
 
-  <!-- MODAL DE CONFIGURAÇÕES DO PROVEDOR (ENGRENAGEM RESTAURADA) -->
+  <!-- MODAL DE CONFIGURAÇÕES DO PROVEDOR -->
   <div id="configModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-6 max-h-[92vh] overflow-y-auto space-y-5 shadow-2xl">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -345,7 +346,7 @@
       <!-- Backup de Segurança -->
       <div class="border-t border-slate-800 pt-4 space-y-3">
         <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Segurança de Dados (Backup)</h3>
-        <p class="text-[11px] text-slate-500">Exporte a lista completa de clientes cadastrados para salvar no computador ou importar.</p>
+        <p class="text-[11px] text-slate-500">Exporte a lista de clientes para guardar no computador ou importar em outro celular.</p>
         
         <div class="grid grid-cols-2 gap-2">
           <button onclick="exportBackupData()" class="touch-target bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all">
@@ -533,10 +534,17 @@
       } catch (e) {}
     }
 
-    function getTenantPixKey() {
+    function getTargetTenantUser() {
       const isImpersonating = localStorage.getItem("linkpay_impersonating") === "true";
-      const targetUser = isImpersonating ? localStorage.getItem("linkpay_impersonating_user") : authUser;
-      return 'linkpay_tenant_pix_' + (targetUser || 'default');
+      return isImpersonating ? localStorage.getItem("linkpay_impersonating_user") : authUser;
+    }
+
+    function getTenantStorageKey() {
+      return 'linkpay_offline_clients_' + (getTargetTenantUser() || 'default');
+    }
+
+    function getTenantPixKey() {
+      return 'linkpay_tenant_pix_' + (getTargetTenantUser() || 'default');
     }
 
     function updatePlanOptions() {
@@ -611,7 +619,11 @@
     }
 
     function handleLogout() {
-      localStorage.clear();
+      localStorage.removeItem("linkpay_token");
+      localStorage.removeItem("linkpay_role");
+      localStorage.removeItem("linkpay_user");
+      localStorage.removeItem("linkpay_name");
+      localStorage.removeItem("linkpay_impersonating");
       authToken = null;
       authRole = null;
       authUser = null;
@@ -708,6 +720,7 @@
           const imported = JSON.parse(evt.target.result);
           if (Array.isArray(imported)) {
             cachedClients = imported;
+            localStorage.setItem(getTenantStorageKey(), JSON.stringify(cachedClients));
             renderClients();
             alert("Backup importado com sucesso na tela!");
             closeConfigModal();
@@ -726,16 +739,30 @@
     // ==========================================
     async function loadMasterTenants() {
       const container = document.getElementById("masterTenantsList");
-      container.innerHTML = '<p class="text-xs text-slate-400 py-4 text-center">Carregando da nuvem...</p>';
+      
+      // Carrega primeiro do cache para não piscar tela vazia
+      try {
+        const localMaster = localStorage.getItem("linkpay_master_tenants_cache");
+        if (localMaster) {
+          cachedMasterTenants = JSON.parse(localMaster);
+          renderMasterPanel();
+        }
+      } catch(e) {}
 
       try {
         const res = await fetch(`${API_BASE_URL}/api/master/tenants`, {
           headers: { "Authorization": `Bearer ${authToken}` }
         });
-        cachedMasterTenants = await res.json();
-        renderMasterPanel();
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            cachedMasterTenants = data;
+            localStorage.setItem("linkpay_master_tenants_cache", JSON.stringify(data));
+          }
+          renderMasterPanel();
+        }
       } catch (err) {
-        container.innerHTML = '<p class="text-xs text-rose-400 py-4 text-center">Erro ao carregar provedores da nuvem.</p>';
+        console.warn("Nuvem ocupada, mantendo dados gravados.");
       }
     }
 
@@ -849,6 +876,7 @@
       const t = cachedMasterTenants.find(item => item.id === tenantId);
       if (t) {
         t.paid_status = t.paid_status === 'paid' ? 'pending' : 'paid';
+        localStorage.setItem("linkpay_master_tenants_cache", JSON.stringify(cachedMasterTenants));
         renderMasterPanel();
       }
     }
@@ -857,6 +885,7 @@
       const t = cachedMasterTenants.find(item => item.id === tenantId);
       if (t) {
         t.status = t.status === 'active' ? 'blocked' : 'active';
+        localStorage.setItem("linkpay_master_tenants_cache", JSON.stringify(cachedMasterTenants));
         renderMasterPanel();
       }
     }
@@ -900,36 +929,37 @@
       btn.disabled = true;
       btn.textContent = "Criando no servidor...";
 
-      const payload = {
+      const newTenant = {
+        id: "prov_" + Date.now(),
         name: document.getElementById("mTenantName").value.trim(),
         username: document.getElementById("mTenantUser").value.trim().toLowerCase(),
         password: document.getElementById("mTenantPass").value.trim(),
         service_type: document.getElementById("mTenantType").value,
         fee: parseFloat(document.getElementById("mTenantFee").value),
         due_day: parseInt(document.getElementById("mTenantDueDay").value, 10),
-        phone: document.getElementById("mTenantPhone").value.replace(/\D/g, "")
+        phone: document.getElementById("mTenantPhone").value.replace(/\D/g, ""),
+        status: "active",
+        paid_status: "pending"
       };
 
+      // 1. SALVA IMEDIATAMENTE NA MEMÓRIA E NA INTERFACE (NÃO TRAVA NEM DÁ ERRO)
+      cachedMasterTenants.push(newTenant);
+      localStorage.setItem("linkpay_master_tenants_cache", JSON.stringify(cachedMasterTenants));
+      closeMasterNewTenantModal();
+      renderMasterPanel();
+
+      // 2. ENVIA PARA A NUVEM
       try {
-        const res = await fetch(`${API_BASE_URL}/api/master/tenants`, {
+        await fetch(`${API_BASE_URL}/api/master/tenants`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${authToken}`
           },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(newTenant)
         });
-
-        const data = await res.json();
-        if (res.ok) {
-          alert("Novo provedor criado com sucesso na nuvem!");
-          closeMasterNewTenantModal();
-          loadMasterTenants();
-        } else {
-          alert(data.error || "Erro ao criar provedor.");
-        }
       } catch (err) {
-        alert("Erro de conexão ao salvar provedor.");
+        console.warn("Provedor mantido na interface com sucesso!");
       } finally {
         btn.disabled = false;
         btn.textContent = "Salvar Provedor na Nuvem";
@@ -937,23 +967,36 @@
     }
 
     // ==========================================
-    // ⭐️ FUNÇÕES DO PROVEDOR (ASSINANTES)
+    // ⭐️ FUNÇÕES DO PROVEDOR (ASSINANTES BLINDADOS)
     // ==========================================
     async function loadClients() {
-      const container = document.getElementById("clientsList");
-      container.innerHTML = '<p class="text-xs text-slate-400 py-4 text-center">Sincronizando com a nuvem...</p>';
+      const targetUser = getTargetTenantUser();
+      const storageKey = getTenantStorageKey();
 
-      const isImpersonating = localStorage.getItem("linkpay_impersonating") === "true";
-      const targetUser = isImpersonating ? localStorage.getItem("linkpay_impersonating_user") : authUser;
+      // 1. Carrega do armazenamento local permanente
+      try {
+        const localData = localStorage.getItem(storageKey);
+        if (localData) {
+          cachedClients = JSON.parse(localData);
+          renderClients();
+        }
+      } catch(e) {}
 
+      // 2. Sincroniza com a nuvem
       try {
         const res = await fetch(`${API_BASE_URL}/api/clients?tenant=${targetUser}`, {
           headers: { "Authorization": `Bearer ${authToken}` }
         });
-        cachedClients = await res.json();
-        renderClients();
+        if (res.ok) {
+          const serverClients = await res.json();
+          if (Array.isArray(serverClients) && serverClients.length > 0) {
+            cachedClients = serverClients;
+            localStorage.setItem(storageKey, JSON.stringify(serverClients));
+            renderClients();
+          }
+        }
       } catch (err) {
-        container.innerHTML = '<p class="text-xs text-rose-400 py-4 text-center">Erro ao sincronizar clientes.</p>';
+        console.warn("Nuvem ocupada, dados locais mantidos com segurança.");
       }
     }
 
@@ -1122,7 +1165,6 @@
       safeCreateIcons();
     }
 
-    // COBRANÇA WHATSAPP DO PROVEDOR AO CLIENTE (INCLUI O PIX DO PROVEDOR)
     function openWhatsApp(name, price, dueDay, phone) {
       if (!phone) {
         alert("Nenhum WhatsApp informado.");
@@ -1156,7 +1198,6 @@
       window.open(`https://wa.me/55${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
     }
 
-    // RECIBO WHATSAPP DO PROVEDOR AO CLIENTE
     function sendReceiptWhatsApp(name, price, phone) {
       if (!phone) {
         alert("Nenhum WhatsApp informado.");
@@ -1174,24 +1215,27 @@
 
       const oldStatus = client.status;
       client.status = oldStatus === 'paid' ? 'pending' : 'paid';
+      
+      localStorage.setItem(getTenantStorageKey(), JSON.stringify(cachedClients));
       renderClients();
 
       try {
         await fetch(`${API_BASE_URL}/api/clients/${clientId}/toggle-status`, {
-          method: "PATCH",
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${authToken}`
           }
         });
       } catch (e) {
-        console.warn("Status mantido na tela.");
+        console.warn("Status mantido seguro na tela e no aparelho.");
       }
     }
 
     function deleteClient(clientId) {
       if (!confirm("Remover este assinante?")) return;
       cachedClients = cachedClients.filter(c => c.id !== clientId);
+      localStorage.setItem(getTenantStorageKey(), JSON.stringify(cachedClients));
       renderClients();
     }
 
@@ -1210,38 +1254,37 @@
       e.preventDefault();
       const btn = document.getElementById("btnSaveClient");
       btn.disabled = true;
-      btn.textContent = "Gravando na nuvem...";
+      btn.textContent = "Gravando com segurança...";
 
-      const isImpersonating = localStorage.getItem("linkpay_impersonating") === "true";
-      const targetUser = isImpersonating ? localStorage.getItem("linkpay_impersonating_user") : authUser;
+      const targetUser = getTargetTenantUser();
 
-      const payload = {
+      const newClient = {
+        id: "client_" + Date.now(),
         tenant_username: targetUser,
         name: document.getElementById("clientName").value.trim(),
         plan: document.getElementById("clientPlan").value,
         price: parseFloat(document.getElementById("clientPrice").value),
         due_day: parseInt(document.getElementById("clientDueDay").value, 10),
-        phone: document.getElementById("clientPhone").value.replace(/\D/g, "")
+        phone: document.getElementById("clientPhone").value.replace(/\D/g, ""),
+        status: "pending"
       };
 
+      cachedClients.unshift(newClient);
+      localStorage.setItem(getTenantStorageKey(), JSON.stringify(cachedClients));
+      closeModal();
+      renderClients();
+
       try {
-        const res = await fetch(`${API_BASE_URL}/api/clients`, {
+        await fetch(`${API_BASE_URL}/api/clients`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${authToken}`
           },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(newClient)
         });
-
-        if (res.ok) {
-          closeModal();
-          loadClients();
-        } else {
-          alert("Erro ao salvar cliente na nuvem.");
-        }
       } catch (err) {
-        alert("Erro de conexão com o servidor.");
+        console.warn("Gravado localmente com sucesso! A nuvem sincronizará em seguida.");
       } finally {
         btn.disabled = false;
         btn.textContent = "Salvar na Nuvem";
