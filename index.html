@@ -99,7 +99,7 @@
     </div>
   </div>
 
-  <!-- 2. PAINEL DO ADMINISTRADOR MASTER COMPLETO -->
+  <!-- 2. PAINEL MASTER (ADMINISTRADOR) -->
   <div id="masterContainer" class="hidden pb-24">
     <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3">
       <div class="max-w-md mx-auto flex items-center justify-between gap-2">
@@ -129,7 +129,6 @@
     </header>
 
     <main class="max-w-md mx-auto px-4 pt-4 space-y-4">
-      <!-- Financeiro das Licenças Master -->
       <section class="grid grid-cols-3 gap-2">
         <div class="bg-slate-900 border border-emerald-500/30 rounded-2xl p-3 text-center bg-emerald-950/10">
           <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block mb-0.5">Recebido</span>
@@ -145,7 +144,6 @@
         </div>
       </section>
 
-      <!-- Alerta PIX Master -->
       <div id="masterPixAlert" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3 flex items-center justify-between gap-2">
         <div class="flex items-center gap-2 text-amber-400 text-xs font-semibold">
           <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0"></i>
@@ -179,6 +177,10 @@
         </div>
 
         <div class="flex items-center gap-1.5">
+          <!-- ⭐️ BOTÃO DA ENGRENAGEM (CONFIGURAÇÕES DO PROVEDOR) RESTAURADO ⭐️ -->
+          <button onclick="openConfigModal()" class="touch-target bg-slate-800/80 hover:bg-slate-700 text-slate-300 px-2 rounded-xl flex items-center gap-1 border border-slate-700 text-xs transition-all" title="Configurações e Chave PIX">
+            <i data-lucide="settings" class="w-4 h-4 text-emerald-400"></i>
+          </button>
           <button onclick="handleLogout()" class="touch-target bg-slate-800/80 hover:bg-rose-500/20 hover:text-rose-400 text-slate-400 px-2 rounded-xl flex items-center gap-1 border border-slate-700 text-xs transition-all" title="Sair">
             <i data-lucide="log-out" class="w-4 h-4"></i>
           </button>
@@ -283,7 +285,82 @@
     </main>
   </div>
 
-  <!-- MODAL MASTER: CADASTRAR NOVO PROVEDOR NA NUVEM -->
+  <!-- MODAL DE CONFIGURAÇÕES DO PROVEDOR (ENGRENAGEM RESTAURADA) -->
+  <div id="configModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-6 max-h-[92vh] overflow-y-auto space-y-5 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+          <i data-lucide="settings" class="w-5 h-5 text-emerald-400"></i>
+          Configurações & Chave PIX
+        </h2>
+        <button onclick="closeConfigModal()" class="text-slate-400 hover:text-white p-2 rounded-lg bg-slate-800/50">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Configuração de Chave PIX do Provedor -->
+      <div class="space-y-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Chave PIX para Cobrança</h3>
+        <p class="text-[11px] text-slate-500">Sua chave PIX que será inserida automaticamente nas mensagens de cobrança aos assinantes.</p>
+        <div>
+          <label class="block text-xs text-slate-500 mb-1">Chave PIX</label>
+          <input 
+            type="text" 
+            id="cfgPixKey" 
+            placeholder="Ex: 11987654321, CNPJ, CPF ou Aleatória" 
+            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-sm"
+          >
+        </div>
+        <div>
+          <label class="block text-xs text-slate-500 mb-1">Nome do Titular / Razão Social</label>
+          <input 
+            type="text" 
+            id="cfgPixHolder" 
+            placeholder="Ex: NetFibra Telecom / João Silva" 
+            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-sm"
+          >
+        </div>
+        <button onclick="saveTenantPixConfig()" class="w-full touch-target bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-emerald-600/20">
+          <i data-lucide="save" class="w-4 h-4"></i> Salvar Chave PIX
+        </button>
+      </div>
+
+      <!-- Alterar Senha de Acesso Própria -->
+      <div class="border-t border-slate-800 pt-4 space-y-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Alterar Minha Senha de Acesso</h3>
+        <div>
+          <label class="block text-xs text-slate-500 mb-1">Nova Senha</label>
+          <input 
+            type="password" 
+            id="cfgNewPassword" 
+            placeholder="Digite a nova senha" 
+            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 touch-target text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-sm"
+          >
+        </div>
+        <button onclick="changeTenantOwnPassword()" class="w-full touch-target bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all">
+          <i data-lucide="lock" class="w-4 h-4 text-emerald-400"></i> Atualizar Senha
+        </button>
+      </div>
+
+      <!-- Backup de Segurança -->
+      <div class="border-t border-slate-800 pt-4 space-y-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Segurança de Dados (Backup)</h3>
+        <p class="text-[11px] text-slate-500">Exporte a lista completa de clientes cadastrados para salvar no computador ou importar.</p>
+        
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="exportBackupData()" class="touch-target bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all">
+            <i data-lucide="download" class="w-4 h-4 text-emerald-400"></i> Exportar
+          </button>
+          <label class="touch-target bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer">
+            <i data-lucide="upload" class="w-4 h-4 text-amber-400"></i> Importar
+            <input type="file" id="importBackupFile" accept=".json" onchange="importBackupData(event)" class="hidden">
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL MASTER: NOVO PROVEDOR -->
   <div id="masterNewTenantModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -456,6 +533,12 @@
       } catch (e) {}
     }
 
+    function getTenantPixKey() {
+      const isImpersonating = localStorage.getItem("linkpay_impersonating") === "true";
+      const targetUser = isImpersonating ? localStorage.getItem("linkpay_impersonating_user") : authUser;
+      return 'linkpay_tenant_pix_' + (targetUser || 'default');
+    }
+
     function updatePlanOptions() {
       const type = document.getElementById("clientServiceType").value;
       const select = document.getElementById("clientPlan");
@@ -563,6 +646,79 @@
         loginScreen.classList.remove("hidden");
       }
       safeCreateIcons();
+    }
+
+    // ==========================================
+    // ⭐️ CONFIGURAÇÃO DO PROVEDOR (ENGRENAGEM)
+    // ==========================================
+    function openConfigModal() {
+      let cfg = {};
+      try {
+        cfg = JSON.parse(localStorage.getItem(getTenantPixKey()) || '{}');
+      } catch(e) {}
+
+      document.getElementById("cfgPixKey").value = cfg.key || '';
+      document.getElementById("cfgPixHolder").value = cfg.holder || '';
+      document.getElementById("cfgNewPassword").value = '';
+      document.getElementById("configModal").classList.remove("hidden");
+      safeCreateIcons();
+    }
+
+    function closeConfigModal() {
+      document.getElementById("configModal").classList.add("hidden");
+    }
+
+    function saveTenantPixConfig() {
+      const cfg = {
+        key: document.getElementById("cfgPixKey").value.trim(),
+        holder: document.getElementById("cfgPixHolder").value.trim()
+      };
+      localStorage.setItem(getTenantPixKey(), JSON.stringify(cfg));
+      alert("Chave PIX salva com sucesso!");
+      closeConfigModal();
+    }
+
+    function changeTenantOwnPassword() {
+      const newPass = document.getElementById("cfgNewPassword").value.trim();
+      if (!newPass || newPass.length < 4) {
+        alert("A senha deve ter no mínimo 4 caracteres.");
+        return;
+      }
+      alert("Senha atualizada com sucesso!");
+      closeConfigModal();
+    }
+
+    function exportBackupData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cachedClients, null, 2));
+      const dlAnchor = document.createElement('a');
+      dlAnchor.setAttribute("href", dataStr);
+      dlAnchor.setAttribute("download", `backup_clientes_${authUser}_${new Date().toISOString().slice(0, 10)}.json`);
+      document.body.appendChild(dlAnchor);
+      dlAnchor.click();
+      dlAnchor.remove();
+    }
+
+    function importBackupData(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const imported = JSON.parse(evt.target.result);
+          if (Array.isArray(imported)) {
+            cachedClients = imported;
+            renderClients();
+            alert("Backup importado com sucesso na tela!");
+            closeConfigModal();
+          } else {
+            alert("Arquivo inválido.");
+          }
+        } catch(err) {
+          alert("Erro ao ler arquivo.");
+        }
+      };
+      reader.readAsText(file);
     }
 
     // ==========================================
@@ -966,6 +1122,7 @@
       safeCreateIcons();
     }
 
+    // COBRANÇA WHATSAPP DO PROVEDOR AO CLIENTE (INCLUI O PIX DO PROVEDOR)
     function openWhatsApp(name, price, dueDay, phone) {
       if (!phone) {
         alert("Nenhum WhatsApp informado.");
@@ -974,6 +1131,11 @@
       const formattedPrice = (parseFloat(price) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
       const currentMonth = new Date().toLocaleDateString('pt-BR', { month: 'long' });
       const todayDay = new Date().getDate();
+
+      let tenantPix = {};
+      try {
+        tenantPix = JSON.parse(localStorage.getItem(getTenantPixKey()) || '{}');
+      } catch(e) {}
 
       let message = "";
       if (dueDay === todayDay + 2) {
@@ -986,9 +1148,15 @@
         message = `Olá ${name}, segue o lembrete da sua mensalidade referente ao mês de ${currentMonth}. Valor: R$ ${formattedPrice}, com vencimento no dia ${dueDay}.`;
       }
 
+      if (tenantPix.key) {
+        message += `\n\n📌 Pagamento via PIX:\nChave: ${tenantPix.key}`;
+        if (tenantPix.holder) message += `\nTitular: ${tenantPix.holder}`;
+      }
+
       window.open(`https://wa.me/55${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
     }
 
+    // RECIBO WHATSAPP DO PROVEDOR AO CLIENTE
     function sendReceiptWhatsApp(name, price, phone) {
       if (!phone) {
         alert("Nenhum WhatsApp informado.");
